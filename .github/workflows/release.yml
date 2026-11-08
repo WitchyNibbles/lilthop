@@ -34,27 +34,28 @@ jobs:
           fi
 
       # One job makes the one draft, so the build jobs below cannot race to
-      # create several. A draft has no public tag page, so it is not found by
-      # tag: list the releases (drafts included, since this token can write)
-      # and pick the draft whose tag_name matches.
+      # create several. The id comes from the create call itself: right after
+      # creating it, a listing from this job's token does not show the draft.
       - name: Create the draft and read its id
         id: draft
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --draft \
-            --verify-tag \
-            --title "Lilthop $GITHUB_REF_NAME" \
-            --notes-file .github/release-notes.md
-          ids="$(gh api "repos/$GH_REPO/releases?per_page=100" \
-            --jq "[.[] | select(.draft and .tag_name == \"$GITHUB_REF_NAME\") | .id] | .[]")"
-          if [ "$(printf '%s\n' "$ids" | grep -c .)" -ne 1 ]; then
-            echo "Expected exactly one draft for $GITHUB_REF_NAME, found: $ids" >&2
-            exit 1
-          fi
-          echo "release_id=$ids" >> "$GITHUB_OUTPUT"
+          gh api "repos/$GH_REPO/git/ref/tags/$GITHUB_REF_NAME" --silent
+          id="$(gh api -X POST "repos/$GH_REPO/releases" \
+            -f tag_name="$GITHUB_REF_NAME" \
+            -f name="Lilthop $GITHUB_REF_NAME" \
+            -F draft=true \
+            -F body=@.github/release-notes.md \
+            --jq .id)"
+          case "$id" in
+            '' | *[!0-9]*)
+              echo "Creating the draft gave no release id: '$id'" >&2
+              exit 1
+              ;;
+          esac
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
 
   build:
     name: ${{ matrix.name }}

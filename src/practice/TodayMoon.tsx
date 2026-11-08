@@ -35,8 +35,12 @@ export function TodayMoon({ from }: TodayMoonProps) {
     const startedAt = performance.now();
     const step = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / FILL_MS);
+      if (progress === 1) {
+        draw(phase);
+        return;
+      }
       draw(start + (phase - start) * (1 - (1 - progress) ** 3));
-      if (progress < 1) frame = requestAnimationFrame(step);
+      frame = requestAnimationFrame(step);
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);

@@ -53,6 +53,7 @@ const phase = () => Number(moon().getAttribute("data-phase"));
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   setReducedMotion(false);
 });
 
@@ -88,15 +89,25 @@ describe("after a saved session", () => {
   });
 
   it("fills the moon over time, then stops at the new phase", async () => {
+    vi.useFakeTimers({
+      toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"],
+    });
     rememberSaves();
     await practise();
     await vi.waitFor(() => expect(phase()).toBeGreaterThan(0));
     const lit = () => moon().querySelector(".moon-lit")?.getAttribute("d");
-    expect(lit()).not.toBe(moon().getAttribute("data-end"));
-    await vi.waitFor(
-      () => expect(lit()).toBe(moon().getAttribute("data-end")),
-      { timeout: 3_000 },
-    );
+    const end = moon().getAttribute("data-end");
+    const runOn = (ms: number) =>
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
+    expect(lit()).not.toBe(end);
+    runOn(500);
+    expect(lit()).not.toBe(end);
+    runOn(2_000);
+    expect(lit()).toBe(end);
+    runOn(2_000);
+    expect(lit()).toBe(end);
   });
 
   it("ends in the same place with reduced motion on", async () => {

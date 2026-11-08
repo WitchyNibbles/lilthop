@@ -168,16 +168,27 @@ impl ScratchDir {
         loop {
             let n = COUNTER.fetch_add(1, Ordering::Relaxed);
             let dir = parent.join(format!("{SCRATCH_PREFIX}{n}"));
-            let mut builder = fs::DirBuilder::new();
-            #[cfg(unix)]
-            std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
-            match builder.create(&dir) {
+            match scratch_dir_builder().create(&dir) {
                 Ok(()) => return Ok(Self(dir)),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
                 Err(e) => return Err(e.into()),
             }
         }
     }
+}
+
+/// On unix the folder is readable by this user only; elsewhere it keeps the
+/// app data folder's own permissions.
+#[cfg(unix)]
+fn scratch_dir_builder() -> fs::DirBuilder {
+    let mut builder = fs::DirBuilder::new();
+    std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+    builder
+}
+
+#[cfg(not(unix))]
+fn scratch_dir_builder() -> fs::DirBuilder {
+    fs::DirBuilder::new()
 }
 
 /// Remove every scratch folder in `base`: what a crash (or a Delete all)
