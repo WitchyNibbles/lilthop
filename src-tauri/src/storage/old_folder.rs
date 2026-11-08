@@ -680,19 +680,21 @@ mod tests {
 
         assert_eq!(remove(&base, &legacy).unwrap(), Removal::Removed);
 
-        let mut left: Vec<String> = contents(&legacy)
+        // Compared as paths, not strings, so the separator is the OS's own.
+        let mut left: Vec<std::path::PathBuf> = contents(&legacy)
             .into_iter()
-            .map(|(p, _)| p.strip_prefix(&legacy).unwrap().display().to_string())
+            .map(|(p, _)| p.strip_prefix(&legacy).unwrap().to_path_buf())
             .collect();
         left.sort();
-        assert_eq!(
-            left,
-            [
-                "recordings/notes.txt",
-                "recordings/rec_1.wav.bak",
-                "thesis.docx"
-            ]
-        );
+        let kept: Vec<std::path::PathBuf> = [
+            &["recordings", "notes.txt"][..],
+            &["recordings", "rec_1.wav.bak"],
+            &["thesis.docx"],
+        ]
+        .iter()
+        .map(|parts| parts.iter().collect())
+        .collect();
+        assert_eq!(left, kept);
         assert!(legacy.join("recordings/rec_9.wav").is_dir());
         assert!(marker(&base, DONE_MARKER), "it can never be copied back");
     }
