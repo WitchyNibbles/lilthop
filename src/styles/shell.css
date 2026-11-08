@@ -1,0 +1,292 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  padding: var(--space-3);
+  border-right: 1px solid var(--rule);
+  background: var(--surface-rail);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+}
+
+.brand-name {
+  font-size: var(--text-body);
+  font-weight: 650;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 2.125rem;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--ease-time) var(--ease-out);
+}
+
+.nav-item:hover:enabled {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.nav-item:disabled {
+  cursor: default;
+}
+
+.nav-locked {
+  padding: var(--space-2);
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.nav-item[aria-current="page"] {
+  background: var(--surface-raised);
+  color: var(--lavender);
+}
+
+.routine {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 0;
+  padding: 0 var(--space-2);
+  overflow-y: auto;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.routine-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.routine-item:hover {
+  color: var(--lavender);
+}
+
+.routine-item[data-done="true"] {
+  color: var(--text-muted);
+}
+
+.routine-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 1px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  color: var(--gold);
+}
+
+.routine-mark .icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.mic-panel {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+}
+
+.mic-state {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.mic-state[data-on="true"] {
+  color: var(--gold);
+}
+
+.mic-reading {
+  height: 1.75rem;
+}
+
+.mic-button {
+  width: 100%;
+  padding: 0 var(--space-2);
+}
+
+.stage-frame {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  height: 100%;
+}
+
+.stage {
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.stage-frame > .alert {
+  margin: var(--space-2) var(--space-5) 0;
+}
+
+/* Always the second row: with no alert above it, the page would land in the auto-sized first. */
+.stage-frame > .stage {
+  grid-row: 2;
+}
+
+.stage h1:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 2;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  cursor: pointer;
+  translate: 0 -200%;
+}
+
+.skip-link:focus-visible {
+  translate: 0 0;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+}
+
+.alert[data-notice="restBreak"] {
+  justify-content: flex-start;
+}
+
+.alert[data-notice="restBreak"] .icon {
+  color: var(--pink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .alert {
+    animation: ease-in-once var(--ease-time) var(--ease-out);
+  }
+}
+
+@keyframes ease-in-once {
+  from {
+    opacity: 0;
+    translate: 0 -0.25rem;
+  }
+}
+
+/* Practice says this in its live column; only the stacked layout needs it in the rail. */
+@media (min-width: 40.0625rem) {
+  .mic-panel[data-narrow-only="true"],
+  .mic-state[data-narrow-only="true"] {
+    display: none;
+  }
+}
+
+/* Narrow windows, and 200% zoom: one scrolling column, so the rail goes by and the stage has room. */
+@media (max-width: 40rem) {
+  .shell {
+    display: block;
+    overflow-y: auto;
+  }
+
+  .rail {
+    flex-flow: row wrap;
+    gap: var(--space-2);
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .routine {
+    display: none;
+  }
+
+  .nav ul {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .mic-panel {
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: var(--space-3);
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .mic-state {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mic-reading {
+    flex: none;
+  }
+
+  .mic-button {
+    flex: none;
+    width: auto;
+    padding: 0 var(--space-3);
+  }
+
+  .stage-frame {
+    display: block;
+    height: auto;
+  }
+
+  .stage {
+    height: auto;
+    padding: var(--space-3);
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+}

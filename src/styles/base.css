@@ -1,0 +1,341 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  background: var(--surface-stage);
+  color: var(--text);
+  caret-color: var(--gold);
+  scrollbar-color: var(--rule-strong) transparent;
+  scrollbar-width: thin;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--rule-strong);
+    border: 0.1875rem solid var(--surface-stage);
+    border-radius: var(--radius);
+  }
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: var(--stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--ease-time) var(--ease-out),
+    border-color var(--ease-time) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.btn:active:not(:disabled) {
+  border-color: var(--text);
+}
+
+.btn:disabled {
+  border-color: var(--rule);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.btn-primary {
+  border-color: var(--action-edge);
+  background: var(--action);
+  color: var(--on-action);
+  font-weight: 650;
+  box-shadow: var(--shadow-small);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--action-hover);
+}
+
+.btn-primary:disabled {
+  border-color: var(--rule);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+.btn-icon {
+  width: var(--control-height);
+  padding: 0;
+}
+
+.btn-icon[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+input[type="text"],
+input[type="number"],
+input[type="search"] {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+input[type="checkbox"] {
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.25rem;
+  background: var(--surface-raised);
+  appearance: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ease-time) var(--ease-out),
+    border-color var(--ease-time) var(--ease-out);
+}
+
+input[type="checkbox"]::before {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--on-action);
+  clip-path: polygon(14% 50%, 0 65%, 40% 100%, 100% 22%, 84% 8%, 38% 68%);
+  content: "";
+  opacity: 0;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--gold);
+}
+
+input[type="checkbox"]:checked {
+  border-color: var(--action-edge);
+  background: var(--action);
+}
+
+input[type="checkbox"]:checked::before {
+  opacity: 1;
+}
+
+.action-result {
+  min-height: var(--line-small);
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.action-result[data-failed="true"] {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.empty {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: 60ch;
+}
+
+.confirm {
+  width: min(30rem, calc(100vw - var(--space-6) * 2));
+  padding: var(--space-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.confirm::backdrop {
+  background: var(--surface-window);
+  opacity: 0.7;
+}
+
+.confirm h2 {
+  font-size: var(--text-lead);
+  line-height: var(--line-body);
+  color: var(--text);
+}
+
+.confirm p {
+  margin-top: var(--space-3);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.select-field {
+  display: inline-grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.select-label {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.select-box {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.select-box select {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-6) 0 var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  appearance: none;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.select-box select:disabled {
+  border-color: var(--rule);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.select-box option,
+.select-box optgroup {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.select-box .icon {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  width: 1rem;
+  height: 1rem;
+  translate: 0 -50%;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.crash {
+  display: grid;
+  gap: var(--space-4);
+  place-content: center;
+  justify-items: start;
+  min-height: 100%;
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.crash-details {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.crash-details summary {
+  cursor: pointer;
+}
+
+.crash-details pre {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.settings-fields {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 20rem;
+}
+
+.settings-fields .select-field {
+  display: grid;
+}

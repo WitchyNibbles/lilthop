@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Linux packages (webview and audio headers)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev libxdo-dev libasound2-dev
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          components: rustfmt, clippy
+
+      # The Rust build embeds ../dist, so the frontend is built first.
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+      - name: Rust format
+        run: cargo fmt --check
+        working-directory: src-tauri
+
+      - name: Rust clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+
+      - name: Rust tests
+        run: cargo test
+        working-directory: src-tauri
+
+      # `cargo metadata` runs once per target in the notices generator, so
+      # every crate of every target has to be on disk first.
+      - name: Fetch every target's crates
+        if: runner.os == 'Linux'
+        run: cargo fetch --locked
+        working-directory: src-tauri
+
+      - name: Third-party notices are up to date
+        if: runner.os == 'Linux'
+        run: |
+          npm run notices
+          git diff --exit-code THIRD-PARTY-NOTICES.md

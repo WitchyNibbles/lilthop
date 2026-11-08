@@ -1,0 +1,117 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds the installers and attaches them to a draft
+# release. The draft is published by hand once the files have been looked at.
+# The builds are unsigned: there are no signing secrets in this workflow.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  create-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.draft.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Tag matches the app version
+        run: |
+          version="$(jq -r .version package.json)"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $version in package.json" >&2
+            exit 1
+          fi
+
+      # One job makes the one draft, so the build jobs below cannot race to
+      # create several. A draft has no public tag page, so it is not found by
+      # tag: list the releases (drafts included, since this token can write)
+      # and pick the draft whose tag_name matches.
+      - name: Create the draft and read its id
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "Lilthop $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md
+          ids="$(gh api "repos/$GH_REPO/releases?per_page=100" \
+            --jq "[.[] | select(.draft and .tag_name == \"$GITHUB_REF_NAME\") | .id] | .[]")"
+          if [ "$(printf '%s\n' "$ids" | grep -c .)" -ne 1 ]; then
+            echo "Expected exactly one draft for $GITHUB_REF_NAME, found: $ids" >&2
+            exit 1
+          fi
+          echo "release_id=$ids" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows (x64)
+            os: windows-latest
+            args: ""
+            rust_targets: ""
+          - name: Linux (x64)
+            os: ubuntu-22.04
+            args: ""
+            rust_targets: ""
+          # One universal app for Apple Silicon and Intel. tauri-action only
+          # uploads, so a single job is simpler than two.
+          - name: macOS (universal)
+            os: macos-latest
+            args: --target universal-apple-darwin
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Linux packages (webview and audio headers)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev libxdo-dev libasound2-dev patchelf libfuse2
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - run: npm ci
+
+      # The frontend is built once, by beforeBuildCommand in tauri.conf.json.
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false

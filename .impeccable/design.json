@@ -1,0 +1,759 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T00:03:23Z",
+  "title": "Design System: Lilthop",
+  "extensions": {
+    "colorMeta": {
+      "surface-stage": {
+        "role": "neutral",
+        "displayName": "Aubergine Night",
+        "canonical": "#0d0916",
+        "tonalRamp": [
+          "#0c0815",
+          "#252130",
+          "#413d4d",
+          "#5f5b6c",
+          "#7f7a8c",
+          "#a09bae",
+          "#c6c1d4",
+          "#f0ebfe"
+        ],
+        "lightValue": "#fbf7fc"
+      },
+      "surface-rail": {
+        "role": "neutral",
+        "displayName": "Rail Dusk",
+        "canonical": "#140d21",
+        "tonalRamp": [
+          "#0e071a",
+          "#262035",
+          "#423b53",
+          "#605972",
+          "#807893",
+          "#a199b5",
+          "#c7bfdc",
+          "#f0ebff"
+        ],
+        "lightValue": "#f3ecf7"
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Plum",
+        "canonical": "#1d1230",
+        "tonalRamp": [
+          "#0f0420",
+          "#281d3c",
+          "#44395a",
+          "#62577a",
+          "#81769c",
+          "#a397be",
+          "#c8bde5",
+          "#f0ebfe"
+        ],
+        "lightValue": "#ffffff"
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Hover Plum",
+        "canonical": "#271a3d",
+        "tonalRamp": [
+          "#100322",
+          "#291c3f",
+          "#44385d",
+          "#62557e",
+          "#82759f",
+          "#a496c2",
+          "#c9bbe9",
+          "#f1ebff"
+        ],
+        "lightValue": "#ede3f3"
+      },
+      "surface-window": {
+        "role": "neutral",
+        "displayName": "Window Black",
+        "canonical": "#08050f",
+        "tonalRamp": [
+          "#0d0914",
+          "#26212e",
+          "#413d4b",
+          "#5f5b6a",
+          "#7f7a8a",
+          "#a09bac",
+          "#c6c1d2",
+          "#f0ebfd"
+        ],
+        "lightValue": "#ffffff"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Thin Rule",
+        "canonical": "#38234d",
+        "tonalRamp": [
+          "#130024",
+          "#2d1841",
+          "#493460",
+          "#685280",
+          "#8872a2",
+          "#aa93c5",
+          "#d0b8ec",
+          "#f3eafe"
+        ],
+        "lightValue": "#dccfe6"
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#8a76a0",
+        "tonalRamp": [
+          "#120221",
+          "#2c1a3d",
+          "#49365b",
+          "#67547c",
+          "#87739d",
+          "#a994c0",
+          "#cfbae7",
+          "#f3eafe"
+        ],
+        "lightValue": "#7e6a92"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Moon White",
+        "canonical": "#f3eaf7",
+        "tonalRamp": [
+          "#0e0911",
+          "#28212b",
+          "#443d47",
+          "#625a65",
+          "#827a85",
+          "#a39ba7",
+          "#c9c0cd",
+          "#f4ebf8"
+        ],
+        "lightValue": "#1d1230"
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Dusk Text",
+        "canonical": "#a99ab9",
+        "tonalRamp": [
+          "#10051a",
+          "#2a1d36",
+          "#463953",
+          "#655773",
+          "#857694",
+          "#a697b6",
+          "#ccbddd",
+          "#f4eafe"
+        ],
+        "lightValue": "#5b4a6e"
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Candle Gold",
+        "canonical": "#ffd477",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#7a5200"
+      },
+      "lavender": {
+        "role": "secondary",
+        "displayName": "Moon Lavender",
+        "canonical": "#b99aff",
+        "tonalRamp": [
+          "#110028",
+          "#2e005d",
+          "#4a2681",
+          "#6847a4",
+          "#8768c8",
+          "#a889ed",
+          "#cbb6ff",
+          "#f0ebff"
+        ],
+        "lightValue": "#5a3db0"
+      },
+      "pink": {
+        "role": "tertiary",
+        "displayName": "Hot Pink",
+        "canonical": "#ff67b7",
+        "tonalRamp": [
+          "#1d000f",
+          "#46012b",
+          "#75014a",
+          "#a7016c",
+          "#ce388d",
+          "#f55eae",
+          "#ffa3ce",
+          "#fee7f1"
+        ],
+        "lightValue": "#b0126a"
+      },
+      "on-action": {
+        "role": "neutral",
+        "displayName": "On Action",
+        "canonical": "#0d0916",
+        "tonalRamp": [
+          "#0c0815",
+          "#252130",
+          "#413d4d",
+          "#5f5b6c",
+          "#7f7a8c",
+          "#a09bae",
+          "#c6c1d4",
+          "#f0ebfe"
+        ],
+        "lightValue": "#1d1230"
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Action Gold",
+        "canonical": "#ffd477",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#ffd477"
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Action Gold Hover",
+        "canonical": "#ffe3a3",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2200",
+          "#513c02",
+          "#735a19",
+          "#937a3c",
+          "#b69b5d",
+          "#dcc182",
+          "#ffedc4"
+        ],
+        "lightValue": "#ffc94f"
+      },
+      "action-edge": {
+        "role": "primary",
+        "displayName": "Action Edge",
+        "canonical": "#ffd477",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#8a5f00"
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Focus Lavender",
+        "canonical": "#b99aff",
+        "tonalRamp": [
+          "#110028",
+          "#2e005d",
+          "#4a2681",
+          "#6847a4",
+          "#8768c8",
+          "#a889ed",
+          "#cbb6ff",
+          "#f0ebff"
+        ],
+        "lightValue": "#5a3db0"
+      },
+      "selection": {
+        "role": "secondary",
+        "displayName": "Selection Plum",
+        "canonical": "#633b79",
+        "tonalRamp": [
+          "#160021",
+          "#350c48",
+          "#532b68",
+          "#724a89",
+          "#9369ab",
+          "#b58acf",
+          "#dcb0f7",
+          "#f6e9fe"
+        ],
+        "lightValue": "#e0cff0"
+      },
+      "moon-full": {
+        "role": "primary",
+        "displayName": "Full Moon",
+        "canonical": "#ffd477",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#9a6a00"
+      },
+      "moon-crater": {
+        "role": "primary",
+        "displayName": "Moon Maria",
+        "canonical": "#ffe3a3",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2200",
+          "#513c02",
+          "#735a19",
+          "#937a3c",
+          "#b69b5d",
+          "#dcc182",
+          "#ffedc4"
+        ],
+        "lightValue": "#b98a2e"
+      },
+      "moon-new": {
+        "role": "neutral",
+        "displayName": "New Moon",
+        "canonical": "#1d1230",
+        "tonalRamp": [
+          "#0f0420",
+          "#281d3c",
+          "#44395a",
+          "#62577a",
+          "#81769c",
+          "#a397be",
+          "#c8bde5",
+          "#f0ebfe"
+        ],
+        "lightValue": "#f3ecf7"
+      },
+      "moon-rim": {
+        "role": "neutral",
+        "displayName": "Moon Rim",
+        "canonical": "#8a76a0",
+        "tonalRamp": [
+          "#120221",
+          "#2c1a3d",
+          "#49365b",
+          "#67547c",
+          "#87739d",
+          "#a994c0",
+          "#cfbae7",
+          "#f3eafe"
+        ],
+        "lightValue": "#7e6a92"
+      },
+      "trace-line": {
+        "role": "primary",
+        "displayName": "Thread Gold",
+        "canonical": "#ffd477",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#8a5f00"
+      },
+      "trace-tip": {
+        "role": "primary",
+        "displayName": "Thread Tip",
+        "canonical": "#fff1c9",
+        "tonalRamp": [
+          "#100a00",
+          "#2d2301",
+          "#4a3f1c",
+          "#695d39",
+          "#897c58",
+          "#ab9e78",
+          "#d1c39d",
+          "#fceec6"
+        ],
+        "lightValue": "#5c3f00"
+      },
+      "trace-glow": {
+        "role": "primary",
+        "displayName": "Tip Glow",
+        "canonical": "#ffd47799",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#ffc94f99"
+      },
+      "trace-band": {
+        "role": "primary",
+        "displayName": "Band Candlelight",
+        "canonical": "#ffd4773d",
+        "tonalRamp": [
+          "#110a00",
+          "#2f2201",
+          "#523c00",
+          "#775802",
+          "#9e7605",
+          "#c19837",
+          "#e8be61",
+          "#ffedc8"
+        ],
+        "lightValue": "#ffc94f73"
+      },
+      "trace-band-edge": {
+        "role": "primary",
+        "displayName": "Band Edge",
+        "canonical": "#a8843f",
+        "tonalRamp": [
+          "#120900",
+          "#312100",
+          "#543b01",
+          "#795704",
+          "#9a7731",
+          "#bd9854",
+          "#e4be79",
+          "#ffeccb"
+        ],
+        "lightValue": "#a87a1e"
+      },
+      "trace-grid": {
+        "role": "neutral",
+        "displayName": "Trace Grid",
+        "canonical": "#38234d",
+        "tonalRamp": [
+          "#130024",
+          "#2d1841",
+          "#493460",
+          "#685280",
+          "#8872a2",
+          "#aa93c5",
+          "#d0b8ec",
+          "#f3eafe"
+        ],
+        "lightValue": "#dccfe6"
+      },
+      "trace-label": {
+        "role": "neutral",
+        "displayName": "Trace Label",
+        "canonical": "#a99ab9",
+        "tonalRamp": [
+          "#10051a",
+          "#2a1d36",
+          "#463953",
+          "#655773",
+          "#857694",
+          "#a697b6",
+          "#ccbddd",
+          "#f4eafe"
+        ],
+        "lightValue": "#5b4a6e"
+      },
+      "chart-line": {
+        "role": "secondary",
+        "displayName": "Chart Violet",
+        "canonical": "#9676ff",
+        "tonalRamp": [
+          "#0e002b",
+          "#2a0163",
+          "#47109c",
+          "#633bc0",
+          "#815fe6",
+          "#a088fe",
+          "#c4bafe",
+          "#eeecff"
+        ],
+        "lightValue": "#5a3db0"
+      },
+      "chart-old": {
+        "role": "neutral",
+        "displayName": "Chart Old Mark",
+        "canonical": "#6f5e84",
+        "tonalRamp": [
+          "#110320",
+          "#2b1b3c",
+          "#47375a",
+          "#66557a",
+          "#86749b",
+          "#a795be",
+          "#cdbbe5",
+          "#f3eafe"
+        ],
+        "lightValue": "#8a7a9c"
+      },
+      "chart-grid": {
+        "role": "neutral",
+        "displayName": "Chart Grid",
+        "canonical": "#38234d",
+        "tonalRamp": [
+          "#130024",
+          "#2d1841",
+          "#493460",
+          "#685280",
+          "#8872a2",
+          "#aa93c5",
+          "#d0b8ec",
+          "#f3eafe"
+        ],
+        "lightValue": "#dccfe6"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The Home greeting only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Screen titles, safety headings and the live status words."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Safety text and the calibration passage."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text, stopping at 60ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Reading labels, notices, notes and small section headings."
+      },
+      "readout": {
+        "displayName": "Readout",
+        "purpose": "The live reading and the result score."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Units, the target range and calibration time."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-small",
+        "value": "0 2px 6px #00000040",
+        "purpose": "The primary button and the chart tooltip."
+      },
+      {
+        "name": "shadow",
+        "value": "0 8px 24px #00000059",
+        "purpose": "Dialogs and alerts above a page."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All easing in the app."
+      },
+      {
+        "name": "ease-time",
+        "value": "200ms",
+        "purpose": "State changes and things easing in once."
+      },
+      {
+        "name": "reading-change",
+        "value": "240ms",
+        "purpose": "Bunny ears, and a reading changing colour or dimming."
+      },
+      {
+        "name": "moon-fill",
+        "value": "1400ms",
+        "purpose": "The moon filling after a save."
+      },
+      {
+        "name": "reduced-trace-step",
+        "value": "250ms",
+        "purpose": "How often the trace paints with reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stacked",
+        "value": "max-width: 40rem"
+      },
+      {
+        "name": "two-column",
+        "value": "min-width: 60rem"
+      },
+      {
+        "name": "home-horizon",
+        "value": "min-width: 64rem and min-height: 44rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one gold action in a view.",
+      "html": "<button class=\"ds-btn-primary\">Start session</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:var(--control-height);padding:0 var(--space-4);border-radius:var(--radius);font-family:var(--font-sans);font-size:var(--text-body);cursor:pointer;transition:background-color var(--ease-time) var(--ease-out),border-color var(--ease-time) var(--ease-out);border:1px solid var(--action-edge);background:var(--action);color:var(--on-action);font-weight:650;box-shadow:var(--shadow-small);}.ds-btn-primary:hover{background:var(--action-hover);}.ds-btn-primary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Every other action: transparent with a strong rule border.",
+      "html": "<button class=\"ds-btn\">Stop</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:var(--control-height);padding:0 var(--space-4);border-radius:var(--radius);font-family:var(--font-sans);font-size:var(--text-body);cursor:pointer;transition:background-color var(--ease-time) var(--ease-out),border-color var(--ease-time) var(--ease-out);border:1px solid var(--rule-strong);background:transparent;color:var(--text);}.ds-btn:hover{background:var(--surface-hover);}.ds-btn:active{border-color:var(--text);}.ds-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Icon Toggle",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "A square icon button that turns gold when pressed.",
+      "html": "<button class=\"ds-btn-icon\" aria-pressed=\"true\" aria-label=\"Metronome\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9.2 3.5h5.6L19 20.5H5zM12 15.5l5-8\"/></svg></button>",
+      "css": ".ds-btn-icon{display:inline-flex;align-items:center;justify-content:center;width:var(--control-height);height:var(--control-height);padding:0;border:1px solid var(--rule-strong);border-radius:var(--radius);background:transparent;color:var(--text);cursor:pointer;}.ds-btn-icon:hover{background:var(--surface-hover);}.ds-btn-icon[aria-pressed=\"true\"]{border-color:var(--gold);color:var(--gold);}.ds-btn-icon:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Raised plum field at control height.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Add a note\">",
+      "css": ".ds-input{width:100%;height:var(--control-height);padding:0 var(--space-3);border:1px solid var(--rule-strong);border-radius:var(--radius);background:var(--surface-raised);color:var(--text);font-family:var(--font-sans);font-size:var(--text-body);}.ds-input::placeholder{color:var(--text-muted);opacity:1;}.ds-input:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-current",
+      "description": "Rail link with an icon. The current page is lavender on raised plum.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 11.5 12 4.5l8 7V20h-5.5v-5.5h-5V20H4z\"/></svg>Home</a><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2.5 15c2.8 0 3.2-7.5 6.2-7.5s3.2 9.5 6.3 9.5 3.4-7 6.5-7\"/></svg>Practice</a></nav>",
+      "css": ".ds-nav{display:grid;width:var(--rail-width);padding:var(--space-3);background:var(--surface-rail);}.ds-nav-item{display:flex;align-items:center;gap:var(--space-3);min-height:2.125rem;padding:0 var(--space-2);border-radius:var(--radius);color:var(--text-muted);font-family:var(--font-sans);font-size:var(--text-body);text-decoration:none;transition:background-color var(--ease-time) var(--ease-out);}.ds-nav-item:hover{background:var(--surface-hover);color:var(--text);}.ds-nav-item[aria-current=\"page\"]{background:var(--surface-raised);color:var(--lavender);}.ds-nav-item:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Rest Break Notice",
+      "kind": "custom",
+      "refersTo": "notice-card",
+      "description": "The strip at its most urgent: raised plum, label text and one pink stop sign, with no coloured edge.",
+      "html": "<div class=\"ds-notice\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z\"/><path d=\"M12 7.5v5.5M12 16.4v.1\"/></svg><p>Time for a voice break. Have some water and let your voice rest for a bit.</p></div>",
+      "css": ".ds-notice{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-1) var(--space-3);background:var(--surface-raised);color:var(--text);font-family:var(--font-sans);font-size:var(--text-small);line-height:var(--line-small);}.ds-notice svg{flex:none;color:var(--pink);}.ds-notice p{margin:0;}"
+    },
+    {
+      "name": "Pitch Readout",
+      "kind": "custom",
+      "refersTo": "readout-value",
+      "description": "The live number in a fixed four character slot. Gold in the band, plain text above or below it.",
+      "html": "<div class=\"ds-readout\"><span class=\"ds-readout-head\"><span>Pitch</span><span>Hz</span></span><span class=\"ds-readout-value\">191 </span></div>",
+      "css": ".ds-readout{display:grid;gap:var(--space-1);width:var(--live-column-width);padding:var(--space-3);background:var(--surface-window);}.ds-readout-head{display:flex;justify-content:space-between;color:var(--text-muted);font-family:var(--font-sans);font-size:var(--text-small);line-height:var(--line-small);}.ds-readout-value{width:4ch;height:var(--readout-size);font-family:var(--font-mono);font-size:var(--readout-size);font-variant-numeric:tabular-nums;line-height:1;white-space:pre;color:var(--gold);transition:color 240ms var(--ease-out);}"
+    },
+    {
+      "name": "Zone Mark",
+      "kind": "custom",
+      "description": "Above, in or below the band, drawn so the meaning is in shape and position. Shown here above the band.",
+      "html": "<svg class=\"ds-zone\" viewBox=\"0 0 28 56\" aria-hidden=\"true\"><path class=\"ds-zone-on\" d=\"M6 13 14 5l8 8\"/><rect x=\"4\" y=\"21\" width=\"20\" height=\"14\" rx=\"3\"/><path class=\"ds-zone-off\" d=\"m6 43 8 8 8-8\"/></svg>",
+      "css": ".ds-zone{width:1.5rem;height:3rem;fill:none;stroke:var(--rule-strong);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}.ds-zone-on{stroke:var(--text);stroke-width:3.5;}.ds-zone-off{opacity:.35;}"
+    },
+    {
+      "name": "Moon Day",
+      "kind": "custom",
+      "description": "A practised day beside a day off: full moon with maria, and a new moon with a thin rim.",
+      "html": "<div class=\"ds-moons\"><svg viewBox=\"0 0 32 32\"><circle class=\"ds-moon-full\" cx=\"16\" cy=\"16\" r=\"13\"/><circle class=\"ds-moon-mare\" cx=\"11.5\" cy=\"12.5\" r=\"3.2\"/><circle class=\"ds-moon-mare\" cx=\"19.5\" cy=\"18.5\" r=\"4.2\"/><circle class=\"ds-moon-mare\" cx=\"12.5\" cy=\"21\" r=\"1.8\"/></svg><svg viewBox=\"0 0 32 32\"><circle class=\"ds-moon-new\" cx=\"16\" cy=\"16\" r=\"13\"/></svg></div>",
+      "css": ".ds-moons{display:flex;gap:var(--space-1);}.ds-moons svg{width:1.875rem;aspect-ratio:1;}.ds-moon-full{fill:var(--moon-full);}.ds-moon-mare{fill:var(--moon-crater);}.ds-moon-new{fill:var(--moon-new);stroke:var(--moon-rim);stroke-width:var(--stroke);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Moonlit Candle",
+    "overview": "The app is a dark window at night. The voice draws a gold thread across it, and a band of candlelight shows where the person chose to aim. The past stays still and only the tip moves. It is built for someone alone in a quiet room, glancing at the screen while making sound, so it stays calm, steady and readable from arm's length.\n\nThe screen is a stage and a rail: compact and dense, with thin rules and tonal layers. It has no card grid, no gauge and no needle. A small bunny in a witch hat and a row of moons carry the character. Showing up is marked by a moon filling, never by a streak.\n\nThe only continuous motion is the trace. Everything else eases in once and stops.",
+    "keyCharacteristics": [
+      "Aubergine night, gold for what is live and primary, lavender second, pink rare.",
+      "A permanent stage: trace frame, readout gutter and a strip under the canvas.",
+      "Nothing moves when sound comes and goes.",
+      "Meaning is always carried by shape and words as well as colour.",
+      "Fully local: two bundled fonts, inline SVG, a canvas trace."
+    ],
+    "rules": [
+      {
+        "name": "The Rare Pink Rule",
+        "body": "Pink marks a moment that needs attention, and only as a small icon: the rest break and the stop heading. It never fills a surface, colours running text, or decorates. The permanent safety line under the controls stays muted, so pink keeps its meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "The Own Range Rule",
+        "body": "The only reading whose colour changes is live pitch, and it changes against the person's own range: gold in the band, plain text above or below it. Brightness is always plain text, so it can never read as praise. Other gold numbers hold one colour at every value, so gold on a number never grades it.",
+        "section": "colors"
+      },
+      {
+        "name": "The One File Rule",
+        "body": "Every colour lives in `tokens.css`. Components name a token and never a raw hex. Text holds 4.5:1 and graphics 3:1 on every surface, in both themes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Measurement Rule",
+        "body": "Live readings, scores and the target range are mono with tabular digits. Timers and recording lengths keep tabular digits in the sans. Readouts always hold four characters, so a number can never change width.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Atkinson Rule",
+        "body": "Only the two Atkinson families are used, and both are bundled with the app. No font ever loads from a network.",
+        "section": "typography"
+      },
+      {
+        "name": "The Clear Window Rule",
+        "body": "Nothing covers the band or the thread. Notices, alerts and a session's notes live in the strip. The result takes the readings' place in the gutter, so the thread just drawn stays in view.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "The strip says one thing at a time: clipping, louder and the rest reminder first, then an alert, then the neutral notices, then a finished session's notes. A rest reminder that has waited 30 seconds takes the strip for its ten seconds, then the others come back. Away from Practice it uses the alert row. With nothing to say the strip shows a quiet strip of night sky.",
+        "section": "layout"
+      },
+      {
+        "name": "The Reserved Slot Rule",
+        "body": "Everything on the practice stage that can change has its size kept in advance: the strip, the status (three lines), the instruction, the safety line and the readout. A notice arriving moves nothing, and the zone only changes once the new zone has lasted, so the status never flickers. A long result scrolls inside the gutter.",
+        "section": "layout"
+      },
+      {
+        "name": "The Small Window Rule",
+        "body": "At 800x600 the instruction and safety line stay fully readable in English and Spanish, and the onboarding safety step fits one screen, in Spanish too. Tests cap instructions at 150 characters and strip text at 190. New copy keeps inside those limits.",
+        "section": "layout"
+      },
+      {
+        "name": "The Candle Light Rule",
+        "body": "Glow belongs to the trace. It marks the voice being in the band and appears nowhere else.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep every notice, alert and note in the strip and every result in the gutter.",
+      "Do reserve the space for anything that can appear on the practice stage before it appears.",
+      "Do pair every colour meaning with a drawn mark and words.",
+      "Do use the moon strip to show practice. A gap is a new moon and not a loss.",
+      "Do keep the safety line and instructions readable at 800x600 in English and Spanish.",
+      "Do check new layouts stacked, down to 400x300.",
+      "Do honour reduced motion in anything that moves.",
+      "Do keep wording plain and free of medical promises. The app measures sound and cannot judge a throat or a voice."
+    ],
+    "donts": [
+      "Don't put anything over the band or the thread.",
+      "Don't use pink for anything but the two attention icons, and don't add new pink moments lightly.",
+      "Don't colour a reading against anything but the person's own range, and don't give brightness the accent.",
+      "Don't put a coloured stripe down the side of a notice. Neutral 1px rules between regions are fine.",
+      "Don't add streaks, streak counts or any language of loss.",
+      "Don't load remote assets or fonts, and don't add raster art. Art is inline SVG, and the trace is canvas.",
+      "Don't add glows beyond the trace, or glass, or a second continuous motion.",
+      "Don't write raw hex outside `tokens.css`."
+    ]
+  }
+}

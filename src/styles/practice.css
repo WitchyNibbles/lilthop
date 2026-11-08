@@ -1,0 +1,393 @@
+.practice {
+  display: grid;
+  grid-template-rows: auto minmax(13rem, 1fr) auto auto;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 33rem;
+}
+
+.exercise-header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.exercise-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 13rem);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Two lines is what the longest instruction needs; a test keeps the copy inside that. */
+.exercise-instruction {
+  height: calc(var(--line-body) * 2);
+  overflow-y: auto;
+}
+
+.trace-frame {
+  /* Four lines is what the longest notice needs in the narrowest strip; a test keeps it inside. */
+  --sill-height: calc(var(--line-small) * 4 + var(--space-1) * 2 + 1px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--live-column-width);
+  grid-template-rows: minmax(0, 1fr) var(--sill-height);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-window);
+}
+
+.trace-window {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.window-sill {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--rule);
+  background: var(--surface-rail);
+}
+
+.window-sill > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.window-sill .alert {
+  position: relative;
+  padding-block: var(--space-1);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+.quiet-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+
+.quiet-star {
+  fill: var(--rule-strong);
+  stroke: none;
+  opacity: 0.55;
+}
+
+.quiet-moon {
+  fill: var(--rule);
+  stroke: none;
+}
+
+.live-column {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+  border-left: 1px solid var(--rule);
+}
+
+.live-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.live-status {
+  height: calc(1.75rem * 3);
+  overflow: hidden;
+  font-size: var(--text-title);
+  font-weight: 650;
+  line-height: 1.75rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+}
+
+.zone-mark {
+  width: 1.5rem;
+  height: 3rem;
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.zone-above,
+.zone-below {
+  opacity: 0.35;
+}
+
+.zone-mark[data-zone="above"] .zone-above,
+.zone-mark[data-zone="below"] .zone-below {
+  stroke: var(--text);
+  stroke-width: 3.5;
+  opacity: 1;
+}
+
+.zone-mark[data-zone="in"] .zone-band {
+  fill: var(--text);
+  stroke: var(--text);
+}
+
+.band-line {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-2);
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.band-line .mono {
+  color: var(--text);
+}
+
+.side-note {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.notice-slot {
+  position: relative;
+  display: flex;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+}
+
+.notice-card {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-3);
+  overflow-y: auto;
+}
+
+.notice-slot[data-filled="false"] .notice-card {
+  display: none;
+}
+
+.notice-slot[data-filled="true"] .notice-card {
+  background: var(--surface-raised);
+}
+
+.notice-card .icon {
+  color: var(--gold);
+}
+
+.notice-slot[data-notice="restBreak"] .icon {
+  color: var(--pink);
+}
+
+.session-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+}
+
+.session-controls .btn-primary {
+  min-width: 10.5rem;
+}
+
+.session-spacer {
+  flex: 1;
+}
+
+.session-timer {
+  min-width: 8.5rem;
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.metronome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tempo-input {
+  width: 4rem;
+  height: var(--control-height);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  text-align: right;
+}
+
+.stop-signs {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: calc(var(--line-small) * 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  text-align: start;
+  cursor: pointer;
+}
+
+.stop-signs span {
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+
+.stop-signs:hover span {
+  text-decoration-color: currentcolor;
+}
+
+.stop-signs .icon {
+  color: var(--text-muted);
+}
+
+/* Empty until there is a result: it holds the live region, and must not add a gap. */
+.result-region:empty {
+  display: none;
+}
+
+.result-panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.result-head {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.today-moon {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.today-moon .moon {
+  width: 3rem;
+}
+
+.today-moon[data-full="true"] .moon-mare {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .result-head,
+  .today-moon {
+    animation: ease-in-once var(--ease-time) var(--ease-out);
+  }
+}
+
+.result-measure,
+.result-note {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.result-score {
+  font-family: var(--font-mono);
+  font-size: var(--readout-size);
+  line-height: 1;
+  color: var(--gold);
+}
+
+.result-score-unit {
+  font-size: var(--text-lead);
+  color: var(--text-muted);
+}
+
+.result-message {
+  max-width: 60ch;
+}
+
+.result-save-failed {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+}
+
+@media (max-width: 40rem) {
+  .practice {
+    grid-template-rows: none;
+    height: auto;
+    min-height: 0;
+  }
+
+  .exercise-title-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .exercise-instruction {
+    height: auto;
+  }
+
+  .trace-frame {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 16rem var(--sill-height) auto;
+  }
+
+  .live-column {
+    display: grid;
+    grid-column: 1;
+    grid-row: 3;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+  }
+
+  .live-column .result-region,
+  .live-column .band-line,
+  .live-column .side-note {
+    grid-column: 1 / -1;
+  }
+
+  .result-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .session-spacer {
+    display: none;
+  }
+
+  .session-timer {
+    min-width: 0;
+    text-align: start;
+  }
+}

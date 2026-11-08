@@ -1,0 +1,135 @@
+.bunny {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bunny-ear {
+  fill: var(--surface-raised);
+}
+
+.bunny-ear-inner {
+  stroke: var(--text-muted);
+}
+
+.bunny-head {
+  fill: var(--surface-rail);
+}
+
+.bunny-hat {
+  stroke: var(--lavender);
+}
+
+.bunny-hat-cone {
+  fill: var(--surface-hover);
+}
+
+.bunny-hat-band {
+  stroke: var(--gold);
+}
+
+/* The ears rest out and rise in the band. With reduced motion they simply stay put. */
+@media (prefers-reduced-motion: no-preference) {
+  .bunny-ear,
+  .bunny-ear-inner {
+    transform-box: view-box;
+    transition: rotate 240ms var(--ease-out);
+  }
+
+  .bunny-ear-left {
+    transform-origin: 26px 32px;
+    rotate: -9deg;
+  }
+
+  .bunny-ear-right {
+    transform-origin: 38px 32px;
+    rotate: 9deg;
+  }
+
+  .bunny[data-perked="true"] .bunny-ear-left,
+  .bunny[data-perked="true"] .bunny-ear-right {
+    rotate: 0deg;
+  }
+}
+
+.trace-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.readout {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.readout-label {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.readout-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.readout-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.readout-value {
+  flex: none;
+  width: 4ch;
+  height: var(--readout-size);
+  font-family: var(--font-mono);
+  font-size: var(--readout-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: pre;
+  color: var(--gold);
+  transition:
+    opacity 240ms var(--ease-out),
+    color 240ms var(--ease-out);
+}
+
+/* Outside the band the number steps back to plain text. Nothing here says good or bad. */
+.readout-value[data-zone="above"],
+.readout-value[data-zone="below"],
+.readout-value[data-neutral="true"] {
+  color: var(--text);
+}
+
+.readout-value[data-dimmed="true"] {
+  color: var(--text-muted);
+}
+
+.readout-unit {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.readout[data-compact="true"] {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.readout[data-compact="true"] .readout-value {
+  height: 1.75rem;
+  font-size: var(--text-title);
+  line-height: 1.75rem;
+}

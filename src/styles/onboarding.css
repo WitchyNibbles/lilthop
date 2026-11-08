@@ -1,0 +1,254 @@
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 100%;
+  max-width: 44rem;
+}
+
+.step-count {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.onboarding[data-step="0"] .step-body {
+  max-width: none;
+}
+
+/* The safety step is the longest; this keeps it on one screen at 800x600 in Spanish. */
+.onboarding[data-step="1"] {
+  gap: var(--space-2);
+}
+
+.onboarding .safety-first {
+  gap: var(--space-3);
+}
+
+.onboarding .safety-first p {
+  font-size: var(--text-body);
+  line-height: var(--line-body);
+}
+
+.welcome-language {
+  max-width: 16rem;
+}
+
+.welcome-night {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-window);
+}
+
+.welcome-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+}
+
+.welcome-star {
+  fill: var(--text-muted);
+}
+
+.welcome-spark {
+  fill: var(--lavender);
+}
+
+.welcome-thread {
+  stroke: var(--trace-line);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.welcome-tip {
+  fill: var(--trace-tip);
+}
+
+.welcome-hill-far {
+  fill: var(--surface-raised);
+}
+
+.welcome-hill-near {
+  fill: var(--surface-hover);
+}
+
+.welcome-night .moon {
+  position: absolute;
+  top: 9%;
+  right: 8%;
+  width: 19%;
+}
+
+.welcome-night .bunny {
+  position: absolute;
+  bottom: 13%;
+  left: 12%;
+  width: 15%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.step-body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--space-3);
+  max-width: 60ch;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+}
+
+.step-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.step-go-on {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.mic-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.mic-check .select-field {
+  flex: 1 1 14rem;
+}
+
+.calibration {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.passage {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  font-size: var(--text-lead);
+  line-height: 1.75rem;
+}
+
+.calibration-progress {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.measured {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.range-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.range-fields label {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+  width: 8rem;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.range-fields input {
+  color: var(--text);
+}
+
+/* Relative, so the hidden legend stays inside the fieldset instead of stretching the window. */
+.goal-list {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.goal-list label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  cursor: pointer;
+}
+
+@media (min-width: 40rem) {
+  .goal-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The sources note under a range: small and muted, open only when asked. */
+.range-sources {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.range-sources summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  list-style: none;
+  cursor: pointer;
+}
+
+.range-sources summary::-webkit-details-marker {
+  display: none;
+}
+
+.range-sources summary .icon {
+  rotate: -90deg;
+}
+
+.range-sources[open] summary .icon {
+  rotate: 0deg;
+}
+
+.range-sources p {
+  margin-top: var(--space-2);
+}
+
+/* With the suggestion under what was measured, this keeps it on one screen at 800x600 in Spanish. */
+.recalibrate,
+.recalibrate .step-body {
+  gap: var(--space-2);
+}
+
+/* After a new measure: the suggestion and the one button that would take it. */
+.suggested-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.suggested-range p {
+  flex: 1 1 24ch;
+}

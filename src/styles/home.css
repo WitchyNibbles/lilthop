@@ -1,0 +1,184 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100%;
+  max-width: 44rem;
+}
+
+.home h1 {
+  font-size: var(--text-display);
+  line-height: 2.25rem;
+}
+
+.moon-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.moon-day {
+  display: grid;
+  flex: 0 1 1.875rem;
+  gap: var(--space-1);
+  justify-items: center;
+}
+
+.moon {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.moon-disc {
+  fill: var(--moon-new);
+  stroke: var(--moon-rim);
+  stroke-width: var(--stroke);
+}
+
+.moon-lit {
+  fill: var(--moon-full);
+}
+
+.moon-mare {
+  display: none;
+  fill: var(--moon-crater);
+}
+
+[data-moon="full"] .moon-disc {
+  fill: var(--moon-full);
+  stroke: none;
+}
+
+[data-moon="full"] .moon-mare {
+  display: block;
+}
+
+.moon-weekday {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.moon-day[data-today="true"] .moon-weekday {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.night {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.next-step {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: 60ch;
+}
+
+.next-time {
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+.next-step h2 {
+  font-size: var(--text-lead);
+  line-height: var(--line-body);
+  color: var(--text);
+}
+
+.invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--rule);
+}
+
+.invite p {
+  flex: 1 1 24rem;
+  max-width: 60ch;
+}
+
+.invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.home-rest {
+  margin-top: auto;
+  max-width: 60ch;
+  font-size: var(--text-small);
+  line-height: var(--line-small);
+  color: var(--text-muted);
+}
+
+/* With room to spare the fortnight rises over a horizon, and the next step stands on the ground. */
+@media (min-width: 64rem) and (min-height: 44rem) {
+  .home {
+    max-width: 60rem;
+  }
+
+  .night {
+    flex: 1;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--surface-window);
+  }
+
+  /* The arc climbs to the top of the sky, whatever the height of the window. */
+  .moon-strip {
+    --rise: min(100vh - 28rem, 30rem);
+    align-items: flex-end;
+    padding: var(--space-6) var(--space-6) var(--space-5);
+  }
+
+  .moon-day {
+    flex-basis: 3.25rem;
+  }
+
+  .next-step {
+    max-width: none;
+    padding: var(--space-5) var(--space-6);
+    border-top: 1px solid var(--rule-strong);
+    background: var(--surface-stage);
+  }
+
+  .moon-day:nth-child(2),
+  .moon-day:nth-child(13) {
+    translate: 0 calc(var(--rise) * -0.27);
+  }
+
+  .moon-day:nth-child(3),
+  .moon-day:nth-child(12) {
+    translate: 0 calc(var(--rise) * -0.5);
+  }
+
+  .moon-day:nth-child(4),
+  .moon-day:nth-child(11) {
+    translate: 0 calc(var(--rise) * -0.7);
+  }
+
+  .moon-day:nth-child(5),
+  .moon-day:nth-child(10) {
+    translate: 0 calc(var(--rise) * -0.85);
+  }
+
+  .moon-day:nth-child(6),
+  .moon-day:nth-child(9) {
+    translate: 0 calc(var(--rise) * -0.95);
+  }
+
+  .moon-day:nth-child(7),
+  .moon-day:nth-child(8) {
+    translate: 0 calc(var(--rise) * -1);
+  }
+}
