@@ -8,6 +8,8 @@ SQLite, which comes inside the `rusqlite` crate, is in the public domain.
 
 The Windows program also links Microsoft's WebView2 loader (`WebView2LoaderStatic.lib`), which the `webview2-com-sys` crate carries. Its licence is under "Vendored code" at the end.
 
+The logo in `docs/brand/` draws the "Lilthop" wordmark from outlines of the Atkinson Hyperlegible Next font (Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next)), under OFL-1.1. Its licence text is under the `@fontsource-variable/atkinson-hyperlegible-next` package below.
+
 The source code of the packages under MPL-2.0 is on crates.io, at the versions listed here.
 
 ## Packages

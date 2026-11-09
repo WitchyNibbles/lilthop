@@ -111,6 +111,20 @@ describe("renderNotices", () => {
     expect(section).toContain("SUCH DAMAGE.");
   });
 
+  it("credits the font behind the logo wordmark in the intro", () => {
+    const notes = renderNotices({ dependencies: crates });
+    const [intro = ""] = notes.split("## Packages");
+    expect(intro).toContain(
+      'The logo in `docs/brand/` draws the "Lilthop" wordmark from outlines of the Atkinson Hyperlegible Next font',
+    );
+    expect(intro).toContain(
+      "Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next)",
+    );
+    expect(intro).toContain(
+      "under OFL-1.1. Its licence text is under the `@fontsource-variable/atkinson-hyperlegible-next` package below.",
+    );
+  });
+
   it("says so when every package has a licence file", () => {
     const [first] = crates;
     const notes = renderNotices({ dependencies: first ? [first] : [] });
