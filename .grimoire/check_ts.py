@@ -1103,7 +1103,8 @@ def rewrite_lcov(root: Path, lcov: Path, target: Path, repo: Path) -> set[Path] 
     return the files it measures (resolved), or None when it cannot be read.
 
     Vitest and c8 name files from the project's directory; diff-cover takes lcov paths to start at
-    the git root.
+    the git root. Blank lines are dropped because diff-cover raises on them, and a report left with
+    no lines is written as an empty file, which diff-cover reads as having nothing to measure.
     """
     try:
         lines = lcov.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -1113,13 +1114,15 @@ def rewrite_lcov(root: Path, lcov: Path, target: Path, repo: Path) -> set[Path] 
     measured: set[Path] = set()
     written = []
     for line in lines:
+        if not line.strip():
+            continue
         if not line.startswith("SF:"):
             written.append(line)
             continue
         path = (root / line[3:].strip()).resolve()
         measured.add(path)
         written.append(f"SF:{Path(os.path.relpath(path, top)).as_posix()}")
-    target.write_text("\n".join(written) + "\n", encoding="utf-8")
+    target.write_text("".join(f"{line}\n" for line in written), encoding="utf-8")
     return measured
 
 
