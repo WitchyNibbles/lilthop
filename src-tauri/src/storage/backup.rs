@@ -971,6 +971,39 @@ mod tests {
         assert_eq!(snapshot(&e), before);
     }
 
+    #[test]
+    fn recordings_that_unpack_to_a_little_more_than_the_file_are_rejected() {
+        let e = env();
+        let (_o, zip_path) = out_file("edge.zip");
+        let data = data_json(serde_json::json!([good_row()]));
+        // a.wav is stored, so the file is a little over 20 kB; b.wav deflates to
+        // almost nothing, so the recordings unpack to a little more than the file.
+        let deflated = zip::write::SimpleFileOptions::default();
+        let stored = deflated.compression_method(zip::CompressionMethod::Stored);
+        let mut zip = zip::ZipWriter::new(fs::File::create(&zip_path).unwrap());
+        for (name, bytes, opts) in [
+            ("data.json", data, deflated),
+            ("recordings/a.wav", zero_wav(20_000), stored),
+            ("recordings/b.wav", zero_wav(10_000), deflated),
+        ] {
+            zip.start_file(name, opts).unwrap();
+            zip.write_all(&bytes).unwrap();
+        }
+        zip.finish().unwrap();
+        let file_len = fs::metadata(&zip_path).unwrap().len();
+        assert!(file_len < 30_000 && 30_000 < 2 * file_len, "{file_len}");
+        let limits = Limits {
+            max_total_bytes: 100,
+            ..Limits::default()
+        };
+
+        let before = snapshot(&e);
+        let err = restore_with(&e.base, &e.conn, &zip_path, NOW, &limits).unwrap_err();
+
+        assert_eq!(err.kind(), ErrorKind::InvalidBackup);
+        assert_eq!(snapshot(&e), before);
+    }
+
     /// A WAV that is small on disk and huge once unpacked: a header and zeros.
     fn zero_wav(unpacked: usize) -> Vec<u8> {
         let mut bytes = b"RIFF\0\0\0\0WAVE".to_vec();
