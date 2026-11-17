@@ -60,6 +60,8 @@ If you change a dependency:
 
 The command stops if a dependency's licence doesn't fit GPL-3.0-or-later.
 
+A Dependabot pull request needs the same two steps on its branch. Until then its CI run fails at the notices step.
+
 ## English and Spanish
 
 Every word the app shows exists in English and Spanish, in `src/i18n`.
