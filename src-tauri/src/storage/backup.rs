@@ -34,8 +34,9 @@ pub struct BackupData {
 /// Caps on what a backup file may ask us to read. A recording may be as big as
 /// a WAV header can describe, so a backup the app made is never refused for the
 /// size of a recording. The total of all recordings may grow to the size of the
-/// backup file itself (see `with_room_for`). Still refused: more than 19,999
-/// recordings, or more than 64 MiB of results.
+/// backup file itself (see `with_room_for`). Still refused: more than 20,000
+/// entries in all (19,999 recordings beside the results, in a backup this app
+/// made), or more than 64 MiB of results.
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
     pub max_entries: usize,
@@ -58,7 +59,8 @@ impl Default for Limits {
 impl Limits {
     /// The app stores recordings uncompressed, so its own backup holds no more
     /// recording bytes than the file is long. Let the total cap grow to that.
-    /// A file that unpacks to more than itself is still held to the plain cap.
+    /// A file that unpacks to more than itself is still held to the larger of
+    /// the plain cap and its own length.
     fn with_room_for(self, file_len: u64) -> Self {
         Self {
             max_total_bytes: self.max_total_bytes.max(file_len),
