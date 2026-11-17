@@ -181,7 +181,10 @@ fn is_zip(file: &mut File) -> AppResult<bool> {
 /// claimed.
 fn read_bounded(source: &mut impl Read, cap: u64) -> AppResult<Vec<u8>> {
     let mut bytes = Vec::new();
-    source.take(cap + 1).read_to_end(&mut bytes)?;
+    source
+        .take(cap + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| as_entry_error(e, "the data in the backup"))?;
     if bytes.len() as u64 > cap {
         return Err(AppError::invalid_backup(
             "an entry in the backup is too large",
@@ -434,7 +437,9 @@ fn write_wav_entry(entry: &mut impl Read, temp: &Path, cap: u64) -> AppResult<u6
         ));
     }
     out.write_all(&header)?;
-    let written = 12 + io::copy(&mut limited, &mut out).map_err(as_entry_error)?;
+    let written = 12
+        + io::copy(&mut limited, &mut out)
+            .map_err(|e| as_entry_error(e, "a recording in the backup"))?;
     if written > cap {
         return Err(too_large());
     }
@@ -444,9 +449,10 @@ fn write_wav_entry(entry: &mut impl Read, temp: &Path, cap: u64) -> AppResult<u6
 
 /// The zip reader fails with `InvalidData` when an entry holds more than its
 /// header declares, or is damaged. That is the backup's fault, not the disk's.
-fn as_entry_error(e: io::Error) -> AppError {
+/// `what` names the entry, as in "a recording in the backup".
+fn as_entry_error(e: io::Error, what: &str) -> AppError {
     if e.kind() == io::ErrorKind::InvalidData {
-        AppError::invalid_backup(format!("a recording in the backup is damaged: {e}"))
+        AppError::invalid_backup(format!("{what} is damaged: {e}"))
     } else {
         e.into()
     }
@@ -910,6 +916,11 @@ mod tests {
     /// Rewrite the declared unpacked size of every `recordings/` entry, in both
     /// the local and the central headers, as a hostile file would.
     fn lie_about_sizes(path: &Path, declared: u32) {
+        lie_about_entry_sizes(path, b"recordings/", declared);
+    }
+
+    /// The same, for every entry whose name starts with `prefix`.
+    fn lie_about_entry_sizes(path: &Path, prefix: &[u8], declared: u32) {
         let mut bytes = fs::read(path).unwrap();
         for (signature, size_at, len_at, name_at) in [
             (&b"PK\x03\x04"[..], 22, 26, 30),
@@ -923,7 +934,7 @@ mod tests {
                     bytes[at + len_at],
                     bytes[at + len_at + 1],
                 ]));
-                if bytes[at + name_at..at + name_at + len].starts_with(b"recordings/") {
+                if bytes[at + name_at..at + name_at + len].starts_with(prefix) {
                     bytes[at + size_at..at + size_at + 4].copy_from_slice(&declared.to_le_bytes());
                 }
             }
@@ -978,6 +989,21 @@ mod tests {
         let err = restore_with(&e.base, &e.conn, &zip_path, NOW, &limits).unwrap_err();
 
         assert_eq!(err.kind(), ErrorKind::InvalidBackup);
+        assert_eq!(snapshot(&e), before);
+    }
+
+    #[test]
+    fn a_data_file_bigger_than_its_header_says_is_an_invalid_backup() {
+        let e = env();
+        let (_o, zip_path) = out_file("short.zip");
+        let data = data_json(serde_json::json!([good_row()]));
+        zip_with(&zip_path, &[("data.json", &data)]);
+        lie_about_entry_sizes(&zip_path, b"data.json", 10);
+
+        let before = snapshot(&e);
+        let err = restore_from(&e.base, &e.conn, &zip_path, NOW).unwrap_err();
+
+        assert_eq!(err.kind(), ErrorKind::InvalidBackup, "{err}");
         assert_eq!(snapshot(&e), before);
     }
 
