@@ -16,7 +16,7 @@ export function ExerciseHeader({ exercise }: { readonly exercise: Exercise }) {
   const choose = (id: string) => {
     const picked = findExercise(id);
     if (picked === undefined) return;
-    session.reset();
+    session.discard();
     openExercise(picked);
   };
 

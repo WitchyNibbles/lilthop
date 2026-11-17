@@ -20,7 +20,7 @@ export type SaveState =
   | { readonly kind: "failed"; readonly error: unknown };
 
 export type SessionState =
-  /** `discarded`: a running session was just dropped, so the strip can say nothing was saved. */
+  /** `discarded`: `discard()` just dropped a running session, so the strip can say nothing was saved. */
   | { readonly phase: "idle"; readonly discarded: boolean }
   | {
       readonly phase: "running";
@@ -84,8 +84,10 @@ export interface Session {
   readonly state: SessionState;
   readonly start: (exercise: Exercise, context: ScoringContext) => void;
   readonly finish: () => void;
-  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing, and says if it dropped a session. */
+  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing and says nothing. */
   readonly reset: () => void;
+  /** Like `reset`, but a running session it drops is marked `discarded`, so the strip can say so. */
+  readonly discard: () => void;
   readonly retrySave: () => void;
 }
 
@@ -146,20 +148,30 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
     [feed, finish],
   );
 
-  const reset = useCallback(() => {
-    const discarded = run.current !== null;
-    run.current?.leaveFeed();
+  /** Lets go of the running session and any unsaved result; true if a session was running. */
+  const dropRun = useCallback((): boolean => {
+    const active = run.current;
     run.current = null;
     unsaved.current = null;
-    dispatch({ type: "reset", discarded });
+    active?.leaveFeed();
+    return active !== null;
   }, []);
+
+  const reset = useCallback(() => {
+    dropRun();
+    dispatch({ type: "reset", discarded: false });
+  }, [dropRun]);
+
+  const discard = useCallback(() => {
+    dispatch({ type: "reset", discarded: dropRun() });
+  }, [dropRun]);
 
   const retrySave = useCallback(() => {
     if (unsaved.current !== null) void save(unsaved.current);
   }, [save]);
 
   return useMemo(
-    () => ({ state, start, finish, reset, retrySave }),
-    [state, start, finish, reset, retrySave],
+    () => ({ state, start, finish, reset, discard, retrySave }),
+    [state, start, finish, reset, discard, retrySave],
   );
 }

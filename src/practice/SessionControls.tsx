@@ -62,7 +62,7 @@ export function SessionControls({ exercise }: { readonly exercise: Exercise }) {
       <button
         className="btn"
         disabled={session.state.phase !== "running"}
-        onClick={session.reset}
+        onClick={session.discard}
         type="button"
       >
         {t("exercise.discard")}
