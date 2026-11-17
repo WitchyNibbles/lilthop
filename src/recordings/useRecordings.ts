@@ -89,12 +89,16 @@ function recorderReducer(
   }
 }
 
+// The compiler wants every recorder action here, so a new one cannot slip past the guard below.
+const RECORDER_ACTIONS: Readonly<Record<RecorderAction["type"], true>> = {
+  recorder: true,
+  started: true,
+  recorded: true,
+};
+
 function isRecorderAction(action: RecordingsAction): action is RecorderAction {
-  return (
-    action.type === "recorder" ||
-    action.type === "started" ||
-    action.type === "recorded"
-  );
+  // Object.hasOwn is ES2022 and this project builds against ES2020; this is the same own-key test.
+  return Object.prototype.hasOwnProperty.call(RECORDER_ACTIONS, action.type);
 }
 
 function recordingsReducer(
