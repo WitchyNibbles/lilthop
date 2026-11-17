@@ -227,7 +227,7 @@ fn check_entries(archive: &mut ZipArchive<File>, limits: &Limits) -> AppResult<V
 /// Name and declared size, read without unpacking the entry.
 fn entry_name_and_size(archive: &mut ZipArchive<File>, index: usize) -> AppResult<(String, u64)> {
     let entry = archive.by_index_raw(index)?;
-    Ok((entry.name().to_owned(), entry.size()))
+    Ok((entry.name()?.into_owned(), entry.size()))
 }
 
 fn check_size(size: u64, cap: u64) -> AppResult<()> {
@@ -264,9 +264,7 @@ fn classify(name: &str) -> AppResult<Entry> {
 fn read_data(archive: &mut ZipArchive<File>, limits: &Limits) -> AppResult<BackupData> {
     let index = (0..archive.len())
         .find(|&i| {
-            archive
-                .name_for_index(i)
-                .is_some_and(|n| n == DATA_ENTRY || n == OLD_DATA_ENTRY)
+            matches!(archive.name_for_index(i), Some(Ok(n)) if n == DATA_ENTRY || n == OLD_DATA_ENTRY)
         })
         .ok_or_else(|| AppError::invalid_backup("the backup has no data.json"))?;
     let mut entry = archive.by_index(index)?;
@@ -436,12 +434,22 @@ fn write_wav_entry(entry: &mut impl Read, temp: &Path, cap: u64) -> AppResult<u6
         ));
     }
     out.write_all(&header)?;
-    let written = 12 + io::copy(&mut limited, &mut out)?;
+    let written = 12 + io::copy(&mut limited, &mut out).map_err(as_entry_error)?;
     if written > cap {
         return Err(too_large());
     }
     out.sync_all()?;
     Ok(written)
+}
+
+/// The zip reader fails with `InvalidData` when an entry holds more than its
+/// header declares, or is damaged. That is the backup's fault, not the disk's.
+fn as_entry_error(e: io::Error) -> AppError {
+    if e.kind() == io::ErrorKind::InvalidData {
+        AppError::invalid_backup(format!("a recording in the backup is damaged: {e}"))
+    } else {
+        e.into()
+    }
 }
 
 #[cfg(test)]
@@ -708,7 +716,7 @@ mod tests {
         create_to(&src.base, &src.conn, &zip_path).unwrap();
 
         let zip = zip::ZipArchive::new(fs::File::open(&zip_path).unwrap()).unwrap();
-        let mut names: Vec<_> = zip.file_names().map(str::to_owned).collect();
+        let mut names: Vec<_> = zip.file_names().map(|n| n.unwrap().into_owned()).collect();
         names.sort();
         assert_eq!(
             names,
