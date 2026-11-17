@@ -179,6 +179,7 @@ describe("errors", () => {
       "not_found",
       "invalid_backup",
       "database",
+      "newer_data",
       "io",
       "migration_failed",
     ]) {

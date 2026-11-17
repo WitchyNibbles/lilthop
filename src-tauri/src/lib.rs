@@ -11,14 +11,17 @@ use tauri::{Manager, RunEvent};
 use audio::AudioState;
 use storage::Storage;
 
-fn open_storage(app: &tauri::App) -> Result<Storage, Box<dyn std::error::Error>> {
+/// Only a data folder path that cannot be found at all (no home folder) fails
+/// here: there is nowhere to store anything then. A folder or database that
+/// will not open is left for the app's own screen to explain.
+fn open_storage(app: &tauri::App) -> tauri::Result<Storage> {
     let resolver = app.path();
     let base = resolver.app_data_dir()?;
     // Same parent Tauri uses for every app's data folder, so the previous
     // identifier's folder is found wherever the platform keeps it.
     let previous = paths::previous_data_dir(&resolver.data_dir()?);
     let legacy = paths::legacy_data_dir(std::env::var_os("APPDATA"));
-    Ok(Storage::init(base, Some(&previous), legacy.as_deref())?)
+    Ok(Storage::init(base, Some(&previous), legacy.as_deref()))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

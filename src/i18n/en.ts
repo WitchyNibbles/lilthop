@@ -74,6 +74,7 @@ export const en = {
     "Nothing was changed. Try again, and if it keeps happening, close the app and open it again.",
   "load.stillFailed": "It still could not be read.",
   "load.moveTitle": "Your earlier data has not been moved yet",
+  "load.newerTitle": "This data is from a newer Lilthop",
   "load.moveStillFailed":
     "It still could not be moved. Your data is still untouched where it was.",
   "load.startFresh": "Start fresh",
@@ -155,6 +156,8 @@ export const en = {
   "error.not_found": "That item could not be found.",
   "error.io": "A file could not be read or written.",
   "error.database": "The saved data could not be read or written.",
+  "error.newer_data":
+    "Your data was saved by a newer version of Lilthop, and this version can't read it. Nothing was changed. Install the newest version to open it.",
   "error.invalid_backup":
     "That backup file could not be used. Nothing was changed.",
   "error.device_lost":

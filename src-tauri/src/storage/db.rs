@@ -33,7 +33,7 @@ pub fn migrate(conn: &Connection) -> AppResult<()> {
     let version: i64 = conn.pragma_query_value(None, "user_version", |r| r.get(0))?;
     if version > SCHEMA_VERSION {
         return Err(AppError::new(
-            crate::error::ErrorKind::Database,
+            ErrorKind::NewerData,
             "this data was saved by a newer version of the app",
         ));
     }
@@ -1088,7 +1088,7 @@ mod tests {
         conn.pragma_update(None, "user_version", SCHEMA_VERSION + 1)
             .unwrap();
         let err = migrate(&conn).unwrap_err();
-        assert_eq!(err.kind(), ErrorKind::Database);
+        assert_eq!(err.kind(), ErrorKind::NewerData);
         let tables: i64 = conn
             .query_row("SELECT COUNT(*) FROM sqlite_master", [], |r| r.get(0))
             .unwrap();

@@ -71,14 +71,15 @@ pub struct DeleteReport {
 }
 
 impl Storage {
-    /// Create the folders and bring in what the older folders hold: first the
-    /// previous identifier's data, then the first version's. If the previous
-    /// data (or the first version's database) cannot be copied yet, the app
-    /// still starts: every `conn()` tries again and fails with
-    /// `MigrationFailed` until it works, so nothing is ever saved into a
-    /// folder that only looks empty.
-    pub fn init(base: PathBuf, previous: Option<&Path>, legacy: Option<&Path>) -> AppResult<Self> {
-        fs::create_dir_all(paths::recordings_dir(&base))?;
+    /// Create the folders, bring in what the older folders hold (first the
+    /// previous identifier's data, then the first version's) and open the
+    /// database once. None of it can stop the app from starting: a failure is
+    /// written to stderr and every `conn()` tries again and returns it until it
+    /// works, so the app can say what is wrong. If the earlier data cannot be
+    /// copied yet that is `MigrationFailed`, so nothing is ever saved into a
+    /// folder that only looks empty. A database that will not open is left
+    /// exactly as it is.
+    pub fn init(base: PathBuf, previous: Option<&Path>, legacy: Option<&Path>) -> Self {
         let storage = Self {
             base,
             previous: previous.map(Path::to_path_buf),
@@ -89,11 +90,10 @@ impl Storage {
         // Before anything reads an older database: a crash may have left a
         // scratch copy of one behind.
         db::sweep_scratch(&storage.base);
-        match storage.settle() {
-            Ok(()) => drop(storage.conn()?),
-            Err(e) => eprintln!("could not move the earlier data yet, will ask to retry: {e}"),
+        if let Err(e) = storage.conn() {
+            eprintln!("could not open the data yet, will say why and ask to retry: {e}");
         }
-        Ok(storage)
+        storage
     }
 
     pub fn base(&self) -> &Path {
@@ -104,12 +104,14 @@ impl Storage {
         paths::recordings_dir(&self.base)
     }
 
-    /// Open the database. Until the older folders are dealt with this first
-    /// tries to, so a failed copy is retried by whatever asks next.
+    /// Open the database. The folders are made first, and until the older
+    /// folders are dealt with this tries to, so a folder that could not be
+    /// made or a failed copy is retried by whatever asks next.
     pub fn conn(&self) -> AppResult<Conn<'_>> {
         // The shared lock comes first: a move that runs between settling and
         // opening would otherwise leave this connection on a replaced file.
         let writer = self.writers.read().unwrap_or_else(PoisonError::into_inner);
+        fs::create_dir_all(self.recordings_dir())?;
         self.settle()?;
         let conn = db::open(&paths::db_path(&self.base))?;
         Ok(Conn {
@@ -363,7 +365,7 @@ mod tests {
         let previous = parent.path().join("com.voice.trainer");
         let legacy = parent.path().join("voice-trainer");
 
-        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy));
 
         assert!(scores_of(&storage).is_empty());
         assert_eq!(db::get_profile(&storage.conn().unwrap()).unwrap(), None);
@@ -383,7 +385,7 @@ mod tests {
         previous_folder(&previous);
         let before = tree_bytes(&previous);
 
-        let storage = Storage::init(new, Some(&previous), None).unwrap();
+        let storage = Storage::init(new, Some(&previous), None);
 
         assert_eq!(scores_of(&storage), vec![Some(55.0), Some(70.0)]);
         assert_eq!(names_of(&storage), vec!["rec_10.wav", "rec_20.wav"]);
@@ -405,7 +407,7 @@ mod tests {
         first_version_folder(legacy.path());
         let old_db = fs::read(paths::old_db_path(legacy.path())).unwrap();
 
-        let storage = Storage::init(base.path().join("new"), None, Some(legacy.path())).unwrap();
+        let storage = Storage::init(base.path().join("new"), None, Some(legacy.path()));
 
         let conn = storage.conn().unwrap();
         let rows = db::list_results(&conn).unwrap();
@@ -437,7 +439,7 @@ mod tests {
         first_version_folder(&legacy);
         // The previous build had already imported the first version's folder,
         // then the person practised some more.
-        let earlier = Storage::init(previous.clone(), None, Some(&legacy)).unwrap();
+        let earlier = Storage::init(previous.clone(), None, Some(&legacy));
         db::insert_result(
             &earlier.conn().unwrap(),
             &new_result("glides", 80.0),
@@ -447,8 +449,8 @@ mod tests {
         fs::rename(paths::db_path(&previous), paths::old_db_path(&previous)).unwrap();
         let before = (tree_bytes(&previous), tree_bytes(&legacy));
 
-        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
-        let again = Storage::init(new, Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy));
+        let again = Storage::init(new, Some(&previous), Some(&legacy));
 
         for s in [&storage, &again] {
             assert_eq!(scores_of(s), vec![Some(61.5), Some(80.0)], "61.5 only once");
@@ -465,8 +467,7 @@ mod tests {
         first_version_folder(&legacy);
         previous_folder(&previous);
 
-        let storage =
-            Storage::init(parent.path().join("new"), Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(parent.path().join("new"), Some(&previous), Some(&legacy));
 
         assert_eq!(scores_of(&storage), vec![Some(55.0), Some(70.0)]);
         assert_eq!(
@@ -484,7 +485,7 @@ mod tests {
         let previous = parent.path().join("com.voice.trainer");
         let new = parent.path().join("com.witchynibbles.lilthop");
         previous_folder(&previous);
-        let first = Storage::init(new.clone(), None, None).unwrap();
+        let first = Storage::init(new.clone(), None, None);
         db::insert_result(
             &first.conn().unwrap(),
             &new_result("glides", 33.0),
@@ -493,7 +494,7 @@ mod tests {
         .unwrap();
         let before = tree_bytes(&new);
 
-        let storage = Storage::init(new.clone(), Some(&previous), None).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), None);
 
         assert_eq!(scores_of(&storage), vec![Some(33.0)]);
         assert!(names_of(&storage).is_empty(), "no recordings copied in");
@@ -520,7 +521,7 @@ mod tests {
             return;
         }
 
-        let storage = Storage::init(new.clone(), Some(&previous), None).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), None);
 
         let err = storage.conn().unwrap_err();
         assert_eq!(err.kind(), ErrorKind::MigrationFailed);
@@ -557,11 +558,11 @@ mod tests {
         if !lock(&stuck, true) {
             return;
         }
-        let first = Storage::init(new.clone(), Some(&previous), None).unwrap();
+        let first = Storage::init(new.clone(), Some(&previous), None);
         assert!(first.conn().is_err());
 
         lock(&stuck, false);
-        let second = Storage::init(new, Some(&previous), None).unwrap();
+        let second = Storage::init(new, Some(&previous), None);
 
         assert_eq!(scores_of(&second), vec![Some(55.0), Some(70.0)]);
     }
@@ -575,7 +576,7 @@ mod tests {
         leave_hot_journal(&paths::old_db_path(&previous));
         let before = tree_bytes(&previous);
 
-        let storage = Storage::init(new, Some(&previous), None).unwrap();
+        let storage = Storage::init(new, Some(&previous), None);
 
         assert_eq!(scores_of(&storage), vec![Some(55.0), Some(70.0)]);
         assert_eq!(tree_bytes(&previous), before);
@@ -590,7 +591,7 @@ mod tests {
         leave_hot_journal(&paths::old_db_path(&legacy));
         let before = tree_bytes(&legacy);
 
-        let storage = Storage::init(new.clone(), None, Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), None, Some(&legacy));
 
         assert_eq!(scores_of(&storage), vec![Some(61.5)]);
         assert_eq!(names_of(&storage), vec!["rec_5.wav"]);
@@ -609,7 +610,7 @@ mod tests {
             return;
         }
 
-        let storage = Storage::init(new.clone(), None, Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), None, Some(&legacy));
 
         let err = storage.conn().unwrap_err();
         assert_eq!(err.kind(), ErrorKind::MigrationFailed);
@@ -636,7 +637,7 @@ mod tests {
         if !lock(&stuck, true) {
             return;
         }
-        let storage = Storage::init(new, None, Some(&legacy)).unwrap();
+        let storage = Storage::init(new, None, Some(&legacy));
         assert!(storage.conn().is_err());
 
         storage.start_fresh().unwrap();
@@ -657,7 +658,7 @@ mod tests {
         if !lock(&stuck, true) {
             return None;
         }
-        let storage = Storage::init(new, Some(&previous), None).unwrap();
+        let storage = Storage::init(new, Some(&previous), None);
         assert!(storage.conn().is_err());
         storage.start_fresh().unwrap();
         Some((storage, previous, stuck))
@@ -685,7 +686,7 @@ mod tests {
             before,
             "the old folder is not written"
         );
-        let restarted = Storage::init(storage.base().to_path_buf(), Some(&previous), None).unwrap();
+        let restarted = Storage::init(storage.base().to_path_buf(), Some(&previous), None);
         assert_eq!(scores_of(&restarted), vec![Some(55.0), Some(70.0)]);
     }
 
@@ -743,7 +744,7 @@ mod tests {
         );
         assert!(scores_of(&storage).is_empty(), "the app still opens, empty");
         assert!(storage.can_move_earlier_data(), "she can try again");
-        let restarted = Storage::init(storage.base().to_path_buf(), Some(&previous), None).unwrap();
+        let restarted = Storage::init(storage.base().to_path_buf(), Some(&previous), None);
         assert!(
             scores_of(&restarted).is_empty(),
             "a restart does not move it"
@@ -760,7 +761,7 @@ mod tests {
         let previous = parent.path().join("com.voice.trainer");
         fs::create_dir_all(&previous).unwrap();
         foreign_db(&paths::old_db_path(&previous));
-        let storage = Storage::init(parent.path().join("new"), Some(&previous), None).unwrap();
+        let storage = Storage::init(parent.path().join("new"), Some(&previous), None);
         storage.start_fresh().unwrap();
 
         assert!(!storage.can_move_earlier_data());
@@ -776,7 +777,7 @@ mod tests {
         let parent = tempdir().unwrap();
         let legacy = parent.path().join("voice-trainer");
         first_version_folder(&legacy);
-        let storage = Storage::init(parent.path().join("new"), None, Some(&legacy)).unwrap();
+        let storage = Storage::init(parent.path().join("new"), None, Some(&legacy));
         storage.start_fresh().unwrap();
         let stuck = paths::old_db_path(&legacy);
         if !lock(&stuck, true) {
@@ -795,7 +796,7 @@ mod tests {
             storage.move_earlier_data().unwrap_err().kind(),
             ErrorKind::InvalidInput
         );
-        let restarted = Storage::init(storage.base().to_path_buf(), None, Some(&legacy)).unwrap();
+        let restarted = Storage::init(storage.base().to_path_buf(), None, Some(&legacy));
         assert!(!restarted.can_move_earlier_data(), "nor after a restart");
     }
 
@@ -834,7 +835,7 @@ mod tests {
         let parent = tempdir().unwrap();
         let previous = parent.path().join("com.voice.trainer");
         previous_folder(&previous);
-        let storage = Storage::init(parent.path().join("new"), Some(&previous), None).unwrap();
+        let storage = Storage::init(parent.path().join("new"), Some(&previous), None);
 
         assert!(!storage.can_move_earlier_data());
         assert_eq!(
@@ -846,7 +847,7 @@ mod tests {
     #[test]
     fn start_fresh_with_no_old_folder_to_move_offers_nothing() {
         let parent = tempdir().unwrap();
-        let storage = Storage::init(parent.path().join("new"), None, None).unwrap();
+        let storage = Storage::init(parent.path().join("new"), None, None);
         storage.start_fresh().unwrap();
 
         assert!(!storage.can_move_earlier_data());
@@ -868,7 +869,7 @@ mod tests {
         if !lock(&stuck, true) {
             return;
         }
-        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy));
         assert_eq!(
             storage.conn().unwrap_err().kind(),
             ErrorKind::MigrationFailed
@@ -885,7 +886,7 @@ mod tests {
             1_730_600_000,
         )
         .unwrap();
-        let restarted = Storage::init(new, Some(&previous), Some(&legacy)).unwrap();
+        let restarted = Storage::init(new, Some(&previous), Some(&legacy));
         assert_eq!(
             scores_of(&restarted),
             vec![Some(44.0)],
@@ -909,7 +910,7 @@ mod tests {
         fs::create_dir_all(&new).unwrap();
         fs::write(new.join(old_folder::SKIP_IMPORT_MARKER), b"").unwrap();
 
-        let storage = Storage::init(new, Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new, Some(&previous), Some(&legacy));
 
         assert!(scores_of(&storage).is_empty());
         assert!(names_of(&storage).is_empty());
@@ -921,7 +922,7 @@ mod tests {
         let previous = parent.path().join("com.voice.trainer");
         let new = parent.path().join("com.witchynibbles.lilthop");
         previous_folder(&previous);
-        let storage = Storage::init(new, Some(&previous), None).unwrap();
+        let storage = Storage::init(new, Some(&previous), None);
 
         storage.start_fresh().unwrap();
 
@@ -961,13 +962,13 @@ mod tests {
         let parent = tempdir().unwrap();
         let previous = parent.path().join("com.voice.trainer");
         previous_folder(&previous);
-        let moved = Storage::init(parent.path().join("a"), Some(&previous), None).unwrap();
+        let moved = Storage::init(parent.path().join("a"), Some(&previous), None);
         let zip = parent.path().join("backup.zip");
         let csv = parent.path().join("results.csv");
 
         backup::create_to(moved.base(), &moved.conn().unwrap(), &zip).unwrap();
         export::export_to(&moved.conn().unwrap(), &csv, ExportFormat::Csv).unwrap();
-        let fresh = Storage::init(parent.path().join("b"), None, None).unwrap();
+        let fresh = Storage::init(parent.path().join("b"), None, None);
         let summary =
             backup::restore_from(fresh.base(), &fresh.conn().unwrap(), &zip, 1_800_000_000)
                 .unwrap();
@@ -989,12 +990,12 @@ mod tests {
         previous_folder(&previous);
         fs::create_dir_all(&neighbour).unwrap();
         fs::write(neighbour.join("keep.txt"), b"x").unwrap();
-        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy));
         let conn = storage.conn().unwrap();
         db::insert_result(&conn, &new_result("glides", 99.0), 1_730_000_900).unwrap();
 
         let report = storage.delete_all().unwrap();
-        let again = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
+        let again = Storage::init(new.clone(), Some(&previous), Some(&legacy));
 
         assert!(report.old_folder_removed && report.previous_folder_removed);
         assert!(
@@ -1025,7 +1026,7 @@ mod tests {
         let new = parent.path().join("com.witchynibbles.lilthop");
         let stale = stale_scratch(&new);
 
-        let storage = Storage::init(new, None, None).unwrap();
+        let storage = Storage::init(new, None, None);
 
         assert!(!stale.exists());
         assert!(scores_of(&storage).is_empty());
@@ -1039,7 +1040,7 @@ mod tests {
         previous_folder(&previous);
         leave_hot_journal(&paths::old_db_path(&previous));
 
-        let storage = Storage::init(new.clone(), Some(&previous), None).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), None);
 
         assert_eq!(scores_of(&storage), vec![Some(55.0), Some(70.0)]);
         let scratch: Vec<_> = fs::read_dir(&new)
@@ -1058,7 +1059,7 @@ mod tests {
     fn delete_all_removes_scratch_copies_too() {
         let parent = tempdir().unwrap();
         let new = parent.path().join("com.witchynibbles.lilthop");
-        let storage = Storage::init(new.clone(), None, None).unwrap();
+        let storage = Storage::init(new.clone(), None, None);
         let stale = stale_scratch(&new);
 
         storage.delete_all().unwrap();
@@ -1072,10 +1073,10 @@ mod tests {
         let previous = parent.path().join("com.voice.trainer");
         let new = parent.path().join("com.witchynibbles.lilthop");
         previous_folder(&previous);
-        let storage = Storage::init(new.clone(), Some(&previous), None).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), None);
 
         storage.delete_all().unwrap();
-        let again = Storage::init(new, Some(&previous), None).unwrap();
+        let again = Storage::init(new, Some(&previous), None);
 
         assert!(!previous.exists());
         assert!(scores_of(&again).is_empty());
@@ -1096,7 +1097,7 @@ mod tests {
         fs::write(paths::old_db_path(&previous), b"not even sqlite").unwrap();
         let (before_legacy, before_previous) = (tree_bytes(&legacy), tree_bytes(&previous));
 
-        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy)).unwrap();
+        let storage = Storage::init(new.clone(), Some(&previous), Some(&legacy));
         let conn = storage.conn().unwrap();
         assert!(db::list_results(&conn).unwrap().is_empty(), "started fresh");
         assert!(names_of(&storage).is_empty());
@@ -1114,7 +1115,7 @@ mod tests {
         let legacy = parent.path().join("voice-trainer");
         let new = parent.path().join("com.witchynibbles.lilthop");
         first_version_folder(&legacy);
-        let storage = Storage::init(new, None, Some(&legacy)).unwrap();
+        let storage = Storage::init(new, None, Some(&legacy));
         let stuck = paths::old_db_path(&legacy);
         if !lock(&stuck, true) {
             return;
@@ -1131,8 +1132,54 @@ mod tests {
     #[test]
     fn delete_all_without_older_folders_reports_nothing_removed() {
         let base = tempdir().unwrap();
-        let storage = Storage::init(base.path().join("new"), None, None).unwrap();
+        let storage = Storage::init(base.path().join("new"), None, None);
         assert_eq!(storage.delete_all().unwrap(), DeleteReport::default());
+    }
+
+    #[test]
+    fn the_app_starts_when_the_database_is_from_a_newer_version() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("data");
+        fs::create_dir_all(paths::recordings_dir(&base)).unwrap();
+        let conn = Connection::open(paths::db_path(&base)).unwrap();
+        conn.pragma_update(None, "user_version", db::SCHEMA_VERSION + 1)
+            .unwrap();
+        drop(conn);
+        let before = fs::read(paths::db_path(&base)).unwrap();
+
+        let storage = Storage::init(base.clone(), None, None);
+
+        assert_eq!(storage.conn().unwrap_err().kind(), ErrorKind::NewerData);
+        assert_eq!(fs::read(paths::db_path(&base)).unwrap(), before);
+    }
+
+    #[test]
+    fn the_app_starts_when_the_database_file_is_not_a_database() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("data");
+        fs::create_dir_all(paths::recordings_dir(&base)).unwrap();
+        let junk = b"this is not a database ".repeat(200);
+        fs::write(paths::db_path(&base), &junk).unwrap();
+
+        let storage = Storage::init(base.clone(), None, None);
+
+        assert_eq!(storage.conn().unwrap_err().kind(), ErrorKind::Database);
+        assert_eq!(fs::read(paths::db_path(&base)).unwrap(), junk);
+    }
+
+    #[test]
+    fn the_app_starts_when_its_folder_cannot_be_made_and_recovers_once_it_can() {
+        let dir = tempdir().unwrap();
+        let blocker = dir.path().join("blocker");
+        fs::write(&blocker, b"a file where a folder should go").unwrap();
+        let base = blocker.join("data");
+
+        let storage = Storage::init(base, None, None);
+
+        assert!(storage.conn().is_err());
+        fs::remove_file(&blocker).unwrap();
+        assert!(storage.conn().is_ok());
+        assert!(storage.recordings_dir().is_dir());
     }
 }
 
