@@ -18,8 +18,8 @@ use ringbuf::traits::{Consumer, Split};
 use ringbuf::{HeapCons, HeapRb};
 
 use super::capture::{
-    Capture, Link, Opened, PcmSink, START_TIMEOUT, build_input_stream, open_input_device, play,
-    spawn_capture, stream_error_handler, take_dropped,
+    Capture, ChannelMix, Link, Opened, PcmSink, START_TIMEOUT, build_input_stream,
+    open_input_device, play, spawn_capture, stream_error_handler, take_dropped,
 };
 use super::{AudioErrorKind, AudioIssue, AudioSource, Report};
 use crate::error::{AppError, AppResult, ErrorKind};
@@ -334,7 +334,7 @@ fn open_stream(
     let (link, dropped) = Link::new(thread::current());
     let sink = PcmSink {
         ring: producer,
-        channels: usize::from(input.config.channels()),
+        mix: ChannelMix::new(usize::from(input.config.channels())),
         link,
     };
     let stream = build_input_stream(
