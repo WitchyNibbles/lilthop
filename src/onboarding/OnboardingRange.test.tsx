@@ -102,4 +102,32 @@ describe("the range", () => {
     await click(t("onboarding.saveContinue"));
     expect(savedProfile()).toMatchObject(suggested);
   });
+
+  function typeRange(min: string, max: string) {
+    fireEvent.change(stage().getByLabelText(t("common.minHz")), {
+      target: { value: min },
+    });
+    fireEvent.change(stage().getByLabelText(t("common.maxHz")), {
+      target: { value: max },
+    });
+  }
+
+  it("saves a typed range when the range step is skipped", async () => {
+    await toRange();
+    typeRange("170", "210");
+    await click(t("common.skip"));
+    await click(t("onboarding.saveContinue"));
+    expect(savedProfile()).toMatchObject({
+      targetMinHz: 170,
+      targetMaxHz: 210,
+    });
+  });
+
+  it("saves no range when the typed one makes no sense and the step is skipped", async () => {
+    await toRange();
+    typeRange("300", "200");
+    await click(t("common.skip"));
+    await click(t("onboarding.saveContinue"));
+    expect(savedProfile()).toMatchObject({ targetMinHz: 0, targetMaxHz: 0 });
+  });
 });
