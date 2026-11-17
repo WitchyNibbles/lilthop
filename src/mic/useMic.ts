@@ -57,13 +57,17 @@ const INITIAL_STATE: MicState = {
   issue: null,
 };
 
-/** Trouble with a recording does not touch the pitch stream; trouble with the device does. */
+/** Which kinds of trouble end the stream that reports them: a lost device or a failed stream. */
 const ENDS_STREAM: Readonly<Record<AudioErrorKind, boolean>> = {
   device_lost: true,
   stream_failed: true,
   write_failed: false,
   audio_lost: false,
 };
+
+/** The recorder runs its own stream: only the pitch stream's own trouble ends the trace. */
+const endsPitchStream = ({ source, kind }: AudioError): boolean =>
+  source === "pitch" && ENDS_STREAM[kind];
 
 function streamReducer(state: MicState, action: StreamAction): MicState {
   switch (action.type) {
@@ -86,7 +90,7 @@ function streamReducer(state: MicState, action: StreamAction): MicState {
     case "audio-error":
       return {
         ...state,
-        status: ENDS_STREAM[action.error.kind] ? "off" : state.status,
+        status: endsPitchStream(action.error) ? "off" : state.status,
         issue: { source: "audio", error: action.error },
       };
   }
@@ -137,7 +141,7 @@ export function useMic(feed: LiveFeed, band: Band | null): Mic {
     };
     const handleAudioError = (error: AudioError) => {
       dispatch({ type: "audio-error", error });
-      if (!ENDS_STREAM[error.kind]) return;
+      if (!endsPitchStream(error)) return;
       feed.stop();
       // The backend still holds the dead stream and would answer the next start with it.
       stopPitch().catch(fail);

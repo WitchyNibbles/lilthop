@@ -78,7 +78,11 @@ describe("mic button", () => {
     await startMic();
     goTo("Progress");
     act(() => {
-      backend.emit("audio-error", { kind: "device_lost", message: "gone" });
+      backend.emit("audio-error", {
+        source: "pitch",
+        kind: "device_lost",
+        message: "gone",
+      });
     });
     expect(screen.getByRole("alert")).toHaveTextContent(t("error.device_lost"));
     expect(rail().getByText(t("reading.micOff"))).toBeInTheDocument();
