@@ -1106,6 +1106,20 @@ mod tests {
     }
 
     #[test]
+    fn a_disk_error_while_unpacking_is_not_blamed_on_the_backup() {
+        let disk = io::Error::new(io::ErrorKind::PermissionDenied, "denied");
+        assert_eq!(
+            as_entry_error(disk, "a recording in the backup").kind(),
+            ErrorKind::Io
+        );
+        let damaged = io::Error::new(io::ErrorKind::InvalidData, "bad crc");
+        assert_eq!(
+            as_entry_error(damaged, "a recording in the backup").kind(),
+            ErrorKind::InvalidBackup
+        );
+    }
+
+    #[test]
     fn the_total_cap_is_shared_by_all_recordings() {
         let e = env();
         let (_o, zip_path) = out_file("many.zip");
