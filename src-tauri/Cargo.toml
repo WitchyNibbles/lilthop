@@ -27,7 +27,7 @@ cpal = "0.15"
 rustfft = "6"
 hound = "3.5"
 ringbuf = "0.6"
-rodio = "0.20"
+rodio = "0.22"
 rusqlite = { version = "0.43", features = ["bundled"] }
 zip = { version = "9.6", default-features = false, features = ["deflate"] }
 tauri-plugin-dialog = "2"
