@@ -201,11 +201,6 @@ export function OnboardingFlow() {
     go(step + 1);
   };
 
-  const skip = () => {
-    if (step === RANGE_STEP) setTypedRange(NO_RANGE);
-    go(step + 1);
-  };
-
   const finish = () => {
     saving.run(async () => {
       if (mic.status === "on") await mic.stop();
@@ -240,7 +235,7 @@ export function OnboardingFlow() {
           onBack={() => go(step - 1)}
           onFinish={finish}
           onNext={next}
-          onSkip={skip}
+          onSkip={() => go(step + 1)}
           saving={saving.state.kind === "busy"}
           step={step}
         />

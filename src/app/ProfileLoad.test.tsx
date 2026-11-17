@@ -3,17 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { translator } from "../i18n";
 import { boot, clickAndSettle, goTo, rail, stage } from "../test/driveApp";
 import { backend, PROFILE } from "../test/fakeBackend";
+import { setup, t, tryAgain, tryAgainButton } from "./loadFailedTestKit";
 
-const t = translator("en");
 const READ_ERROR = { kind: "io", message: "database is locked" };
 
 const failedScreen = () =>
   stage().queryByRole("heading", { name: t("load.title") });
-const setup = () =>
-  stage().queryByRole("heading", { name: t("onboarding.welcome") });
-const tryAgainButton = () =>
-  stage().getByRole("button", { name: t("error.retry") });
-const tryAgain = () => clickAndSettle(tryAgainButton());
 
 async function bootWithFailedRead() {
   backend.fail("get_profile", READ_ERROR);

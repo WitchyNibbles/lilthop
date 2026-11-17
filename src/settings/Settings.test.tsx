@@ -9,6 +9,8 @@ import {
   play,
   rail,
   stage,
+  startMic,
+  startSession,
 } from "../test/driveApp";
 import { backend, PROFILE } from "../test/fakeBackend";
 
@@ -264,6 +266,24 @@ describe("delete all data", () => {
     expect(
       await stage().findByRole("button", { name: t("recordings.record") }),
     ).toBeInTheDocument();
+  });
+
+  it("drops a running session without saying it was discarded", async () => {
+    await boot();
+    goTo("Practice");
+    await startMic();
+    startSession();
+    goTo("Settings");
+    await click(t("data.deleteAll"));
+    await clickAndSettle(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: t("data.confirmAction"),
+      }),
+    );
+    goTo("Practice");
+    expect(stage().getByTestId("notice-slot")).not.toHaveTextContent(
+      t("exercise.discarded"),
+    );
   });
 
   it("shows a real error and stays put when deleting fails", async () => {

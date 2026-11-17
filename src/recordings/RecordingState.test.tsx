@@ -65,6 +65,27 @@ describe("while a recording runs", () => {
   });
 });
 
+describe("when the recording starts", () => {
+  it("says so when the chosen microphone was missing and the default one is recording", async () => {
+    backend.respond("start_recording", { name: "rec_new.wav", fellBack: true });
+    await open();
+    await record();
+    expect(stage().getByRole("status")).toHaveTextContent(
+      t("settings.deviceFellBack"),
+    );
+  });
+
+  it("says nothing when the chosen microphone is the one recording", async () => {
+    backend.respond("start_recording", {
+      name: "rec_new.wav",
+      fellBack: false,
+    });
+    await open();
+    await record();
+    expect(stage().getByRole("status")).toBeEmptyDOMElement();
+  });
+});
+
 describe("when the disk stops taking the recording", () => {
   const writeFailed = {
     source: "recorder",

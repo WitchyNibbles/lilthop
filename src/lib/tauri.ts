@@ -10,6 +10,7 @@ import type {
   PlaybackEnded,
   Profile,
   RecordingInfo,
+  RecordingStarted,
   RestoreSummary,
   SavedResult,
   StreamInfo,
@@ -69,7 +70,7 @@ export const startPitch = (deviceName: string | null): Promise<StreamInfo> =>
 export const stopPitch = (): Promise<void> => call("stop_pitch");
 export const startRecording = (
   deviceName: string | null,
-): Promise<{ name: string }> => call("start_recording", { deviceName });
+): Promise<RecordingStarted> => call("start_recording", { deviceName });
 export const stopRecording = (): Promise<RecordingInfo> =>
   call("stop_recording");
 export const playRecording = (name: string): Promise<void> =>

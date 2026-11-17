@@ -17,13 +17,13 @@ New to voice training? Welcome. Please read [Read this first](#read-this-first) 
 
 ## Download
 
-Version 0.1.0, for [Windows, Linux and macOS](https://github.com/WitchyNibbles/lilthop/releases/tag/v0.1.0).
+Version 0.1.1, for [Windows, Linux and macOS](https://github.com/WitchyNibbles/lilthop/releases/tag/v0.1.1).
 
 | System  | Download                                                                                                                                                                                                                                                                                                                                                         |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows | [`Lilthop_0.1.0_x64-setup.exe`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop_0.1.0_x64-setup.exe), or the [`.msi`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop_0.1.0_x64_en-US.msi) if you prefer that                                                                                                |
-| Linux   | [`.AppImage`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop_0.1.0_amd64.AppImage), [`.deb`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop_0.1.0_amd64.deb) (Debian, Ubuntu) or [`.rpm`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop-0.1.0-1.x86_64.rpm) (Fedora, openSUSE) |
-| macOS   | [`Lilthop_0.1.0_universal.dmg`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.0/Lilthop_0.1.0_universal.dmg), one build for Apple Silicon and Intel                                                                                                                                                                                            |
+| Windows | [`Lilthop_0.1.1_x64-setup.exe`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop_0.1.1_x64-setup.exe), or the [`.msi`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop_0.1.1_x64_en-US.msi) if you prefer that                                                                                                |
+| Linux   | [`.AppImage`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop_0.1.1_amd64.AppImage), [`.deb`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop_0.1.1_amd64.deb) (Debian, Ubuntu) or [`.rpm`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop-0.1.1-1.x86_64.rpm) (Fedora, openSUSE) |
+| macOS   | [`Lilthop_0.1.1_universal.dmg`](https://github.com/WitchyNibbles/lilthop/releases/download/v0.1.1/Lilthop_0.1.1_universal.dmg), one build for Apple Silicon and Intel                                                                                                                                                                                            |
 
 The builds are unsigned, so your computer warns you the first time. [Install](#install) says how to get past that.
 

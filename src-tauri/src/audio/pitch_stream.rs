@@ -12,8 +12,8 @@ use ringbuf::{HeapCons, HeapRb};
 use serde::Serialize;
 
 use super::capture::{
-    Capture, Link, MonoSink, Opened, START_TIMEOUT, build_input_stream, open_input_device, play,
-    spawn_capture, stream_error_handler, take_dropped,
+    Capture, ChannelMix, Link, MonoSink, Opened, START_TIMEOUT, build_input_stream,
+    open_input_device, play, spawn_capture, stream_error_handler, take_dropped,
 };
 use super::{AudioSource, Report, StreamInfo};
 use crate::dsp::{self, Analyzer};
@@ -174,7 +174,7 @@ fn open(
     let (link, dropped) = Link::new(thread::current());
     let sink = MonoSink {
         ring: producer,
-        channels,
+        mix: ChannelMix::new(channels),
         link,
     };
     let stream = build_input_stream(

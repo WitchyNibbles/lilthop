@@ -29,10 +29,15 @@ interface RecordingsState {
   readonly notice: RecordingsNotice | null;
 }
 
-type RecordingsAction =
-  | { readonly type: "listed"; readonly items: readonly RecordingInfo[] }
+/** What the recorder itself does: a step, a start that answered, a take that closed. */
+type RecorderAction =
   | { readonly type: "recorder"; readonly recorder: RecorderStatus }
-  | { readonly type: "recorded"; readonly item: RecordingInfo }
+  | { readonly type: "started"; readonly fellBack: boolean }
+  | { readonly type: "recorded"; readonly item: RecordingInfo };
+
+type RecordingsAction =
+  | RecorderAction
+  | { readonly type: "listed"; readonly items: readonly RecordingInfo[] }
   | { readonly type: "playing"; readonly name: string | null }
   | { readonly type: "ended"; readonly name: string }
   | { readonly type: "removed"; readonly name: string }
@@ -59,21 +64,51 @@ function notPlaying(playing: string | null, name: string): string | null {
   return playing === name ? null : playing;
 }
 
-function recordingsReducer(
+function recorderReducer(
   state: RecordingsState,
-  action: RecordingsAction,
+  action: RecorderAction,
 ): RecordingsState {
   switch (action.type) {
-    case "listed":
-      return { ...state, items: action.items, loaded: true };
     case "recorder":
       return { ...state, recorder: action.recorder, notice: null };
+    case "started":
+      // Another microphone than the chosen one is recording: say so, as the pitch stream does.
+      return {
+        ...state,
+        recorder: "recording",
+        notice: action.fellBack
+          ? { kind: "message", key: "settings.deviceFellBack" }
+          : null,
+      };
     case "recorded":
       return {
         ...state,
         recorder: "idle",
         items: [action.item, ...state.items],
       };
+  }
+}
+
+// The compiler wants every recorder action here, so a new one cannot slip past the guard below.
+const RECORDER_ACTIONS: Readonly<Record<RecorderAction["type"], true>> = {
+  recorder: true,
+  started: true,
+  recorded: true,
+};
+
+function isRecorderAction(action: RecordingsAction): action is RecorderAction {
+  // Object.hasOwn is ES2022 and this project builds against ES2020; this is the same own-key test.
+  return Object.prototype.hasOwnProperty.call(RECORDER_ACTIONS, action.type);
+}
+
+function recordingsReducer(
+  state: RecordingsState,
+  action: RecordingsAction,
+): RecordingsState {
+  if (isRecorderAction(action)) return recorderReducer(state, action);
+  switch (action.type) {
+    case "listed":
+      return { ...state, items: action.items, loaded: true };
     case "playing":
       return { ...state, playing: action.name, notice: null };
     case "ended":
@@ -190,9 +225,9 @@ export function useRecordings(device: string | null): Recordings {
     recorderNow.current = "starting";
     dispatch({ type: "recorder", recorder: "starting" });
     startRecording(device)
-      .then(() => {
+      .then(({ fellBack }) => {
         recorderNow.current = "recording";
-        dispatch({ type: "recorder", recorder: "recording" });
+        dispatch({ type: "started", fellBack });
         if (diedWhileStarting.current) closeDeadTake();
       })
       .catch(fail);

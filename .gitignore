@@ -26,3 +26,6 @@ dist-ssr
 # Build and test output
 *.tsbuildinfo
 coverage
+
+# Written by a design tool on every edit; it holds a local path
+.impeccable/hook.cache.json

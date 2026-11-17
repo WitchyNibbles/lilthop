@@ -1,7 +1,9 @@
 name: Release
 
-# Pushing a tag like v0.1.0 builds the installers and attaches them to a draft
-# release. The draft is published by hand once the files have been looked at.
+# Pushing a tag like v0.1.0 first runs the same checks as CI on the tagged
+# commit. Only when they pass does it build the installers and attach them to
+# a draft release. The draft is published by hand once the files have been
+# looked at.
 # The builds are unsigned: there are no signing secrets in this workflow.
 on:
   push:
@@ -12,8 +14,14 @@ permissions:
   contents: read
 
 jobs:
+  # The same checks as CI, on the tagged commit. A red commit gets no draft.
+  checks:
+    name: Checks
+    uses: ./.github/workflows/ci.yml
+
   create-release:
     name: Create draft release
+    needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

@@ -20,7 +20,8 @@ export type SaveState =
   | { readonly kind: "failed"; readonly error: unknown };
 
 export type SessionState =
-  | { readonly phase: "idle" }
+  /** `discarded`: `reset()` just dropped a running session, so the strip can say nothing was saved. */
+  | { readonly phase: "idle"; readonly discarded: boolean }
   | {
       readonly phase: "running";
       readonly exercise: Exercise;
@@ -44,7 +45,15 @@ type SessionAction =
       readonly pitchMeanHz: number;
     }
   | { readonly type: "save"; readonly save: SaveState }
-  | { readonly type: "reset" };
+  | { readonly type: "reset"; readonly discarded: boolean }
+  | { readonly type: "forgetDiscard" };
+
+/** Only an idle state that still carries the note changes; a run or a result comes back as it was. */
+function withoutDiscardNote(state: SessionState): SessionState {
+  return state.phase === "idle" && state.discarded
+    ? { phase: "idle", discarded: false }
+    : state;
+}
 
 function sessionReducer(
   state: SessionState,
@@ -68,7 +77,9 @@ function sessionReducer(
     case "save":
       return state.phase === "result" ? { ...state, save: action.save } : state;
     case "reset":
-      return { phase: "idle" };
+      return { phase: "idle", discarded: action.discarded };
+    case "forgetDiscard":
+      return withoutDiscardNote(state);
   }
 }
 
@@ -83,14 +94,22 @@ export interface Session {
   readonly state: SessionState;
   readonly start: (exercise: Exercise, context: ScoringContext) => void;
   readonly finish: () => void;
-  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing. */
+  /**
+   * Drops a running session, or leaves a result, and goes back to idle, saving nothing. Only a
+   * dropped running session is marked `discarded`, so the strip can say so.
+   */
   readonly reset: () => void;
+  /** Clears the discard note and nothing else, so it stays on the screen where the session was dropped. */
+  readonly forgetDiscard: () => void;
   readonly retrySave: () => void;
 }
 
 /** Runs one exercise: records frames, scores at the end, saves only what was scored. */
 export function useSession(feed: LiveFeed, onSaved: () => void): Session {
-  const [state, dispatch] = useReducer(sessionReducer, { phase: "idle" });
+  const [state, dispatch] = useReducer(sessionReducer, {
+    phase: "idle",
+    discarded: false,
+  });
   const run = useRef<ActiveRun | null>(null);
   const unsaved = useRef<NewResult | null>(null);
 
@@ -142,11 +161,21 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
     [feed, finish],
   );
 
-  const reset = useCallback(() => {
-    run.current?.leaveFeed();
+  /** Lets go of the running session and any unsaved result; true if a session was running. */
+  const dropRun = useCallback((): boolean => {
+    const active = run.current;
     run.current = null;
     unsaved.current = null;
-    dispatch({ type: "reset" });
+    active?.leaveFeed();
+    return active !== null;
+  }, []);
+
+  const reset = useCallback(() => {
+    dispatch({ type: "reset", discarded: dropRun() });
+  }, [dropRun]);
+
+  const forgetDiscard = useCallback(() => {
+    dispatch({ type: "forgetDiscard" });
   }, []);
 
   const retrySave = useCallback(() => {
@@ -154,7 +183,7 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
   }, [save]);
 
   return useMemo(
-    () => ({ state, start, finish, reset, retrySave }),
-    [state, start, finish, reset, retrySave],
+    () => ({ state, start, finish, reset, forgetDiscard, retrySave }),
+    [state, start, finish, reset, forgetDiscard, retrySave],
   );
 }

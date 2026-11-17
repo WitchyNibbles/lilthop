@@ -116,10 +116,18 @@
   overflow: hidden;
   font-size: var(--text-title);
   font-weight: 650;
-  line-height: 1.75rem;
+  line-height: calc(1.75 / 1.375);
   color: var(--text);
   display: flex;
   align-items: center;
+}
+
+.live-column .live-status {
+  /* The longest one-word status ("Escuchando…") has to fit the narrowest gutter, so the size follows the gutter. */
+  font-size: min(
+    var(--text-title),
+    calc((var(--live-column-width) - 2 * var(--space-3)) * 0.115)
+  );
 }
 
 .zone-mark {
@@ -195,6 +203,15 @@
 
 .notice-card .icon {
   color: var(--gold);
+}
+
+.notice-card p {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-card .btn {
+  flex: none;
 }
 
 .notice-slot[data-notice="restBreak"] .icon {
@@ -369,6 +386,10 @@
     align-items: center;
     border-top: 1px solid var(--rule);
     border-left: 0;
+  }
+
+  .live-column .live-status {
+    font-size: var(--text-title);
   }
 
   .live-column .result-region,

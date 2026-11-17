@@ -1,7 +1,7 @@
 {
   "name": "lilthop",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Private voice practice app: practise pitch, record and track your voice. Everything stays on your computer.",
   "license": "GPL-3.0-or-later",
   "author": "WitchyNibbles",

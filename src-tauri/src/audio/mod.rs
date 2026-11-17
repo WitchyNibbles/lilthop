@@ -70,6 +70,14 @@ pub struct StreamInfo {
     pub fell_back: bool,
 }
 
+/// Answer to `start_recording`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecordingStarted {
+    pub name: String,
+    pub fell_back: bool,
+}
+
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     // A panic on an audio thread must not lock the app out of its mic.
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
@@ -130,22 +138,26 @@ impl AudioState {
         }
     }
 
-    /// Start recording into `dir`. Returns the new file's name.
+    /// Start recording into `dir`. Returns the new file's name and whether
+    /// another microphone stood in for the requested one.
     pub fn start_recording(
         &self,
         dir: PathBuf,
         unix_ms: u128,
         device: Option<String>,
         report: Report,
-    ) -> AppResult<String> {
+    ) -> AppResult<RecordingStarted> {
         let mut slot = lock(&self.inner.recorder);
         if slot.is_some() {
             return Err(AppError::invalid("a recording is already in progress"));
         }
         let session = recorder::start(dir, unix_ms, device, report)?;
-        let name = session.name().to_owned();
+        let started = RecordingStarted {
+            name: session.name().to_owned(),
+            fell_back: session.fell_back(),
+        };
         *slot = Some(session);
-        Ok(name)
+        Ok(started)
     }
 
     pub fn stop_recording(&self) -> AppResult<RecordingInfo> {
@@ -248,6 +260,19 @@ mod tests {
         assert_eq!(
             serde_json::to_value(info).unwrap(),
             serde_json::json!({ "sampleRate": 48000, "device": "Mic", "fellBack": true })
+        );
+    }
+
+    #[test]
+    fn the_start_recording_answer_serializes_as_the_webview_expects() {
+        let started = RecordingStarted {
+            name: "rec_1.wav".into(),
+            fell_back: true,
+        };
+
+        assert_eq!(
+            serde_json::to_value(started).unwrap(),
+            serde_json::json!({ "name": "rec_1.wav", "fellBack": true })
         );
     }
 

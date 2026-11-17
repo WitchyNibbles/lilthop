@@ -198,7 +198,11 @@ describe("useMic", () => {
     const { result } = await mount();
     await turnOn(result);
     await act(async () => {
-      backend.emit("audio-error", { kind: "device_lost", message: "gone" });
+      backend.emit("audio-error", {
+        source: "pitch",
+        kind: "device_lost",
+        message: "gone",
+      });
       await Promise.resolve();
     });
     expect(result.current.status).toBe("off");
@@ -211,7 +215,11 @@ describe("useMic", () => {
     const { result } = await mount();
     await turnOn(result);
     act(() => {
-      backend.emit("audio-error", { kind: "stream_failed", message: "xrun" });
+      backend.emit("audio-error", {
+        source: "pitch",
+        kind: "stream_failed",
+        message: "xrun",
+      });
     });
     expect(result.current.status).toBe("off");
     expect(backend.callsTo("stop_pitch")).toHaveLength(1);
@@ -241,6 +249,22 @@ describe("useMic", () => {
     const { issue } = result.current;
     expect(issue && micIssueMessage(issue, t)).toBe(t("error.audio_lost"));
     expect(backend.callsTo("stop_pitch")).toHaveLength(0);
+  });
+
+  it("keeps the trace when it is the recorder that lost the device", async () => {
+    const { result } = await mount();
+    await turnOn(result);
+    act(() => {
+      backend.emit("audio-error", {
+        source: "recorder",
+        kind: "device_lost",
+        message: "gone",
+      });
+    });
+    expect(result.current.status).toBe("on");
+    expect(backend.callsTo("stop_pitch")).toHaveLength(0);
+    const { issue } = result.current;
+    expect(issue && micIssueMessage(issue, t)).toBe(t("error.device_lost"));
   });
 
   it("can dismiss a message", async () => {

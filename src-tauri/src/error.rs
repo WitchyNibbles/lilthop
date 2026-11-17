@@ -17,8 +17,10 @@ pub enum ErrorKind {
     NotFound,
     /// A backup file failed validation. Nothing was changed.
     InvalidBackup,
-    /// The database is newer than this app, or it failed.
+    /// The database failed: damaged, not a database, or a query went wrong.
     Database,
+    /// The data was saved by a newer version of the app. It was left as it is.
+    NewerData,
     /// Disk read or write failed.
     Io,
     /// No microphone, or it was unplugged.
@@ -39,6 +41,7 @@ impl ErrorKind {
             Self::NotFound => "not_found",
             Self::InvalidBackup => "invalid_backup",
             Self::Database => "database",
+            Self::NewerData => "newer_data",
             Self::Io => "io",
             Self::DeviceLost => "device_lost",
             Self::StreamFailed => "stream_failed",
@@ -149,6 +152,7 @@ mod tests {
             (ErrorKind::StreamFailed, "stream_failed"),
             (ErrorKind::WriteFailed, "write_failed"),
             (ErrorKind::MigrationFailed, "migration_failed"),
+            (ErrorKind::NewerData, "newer_data"),
         ] {
             let json = serde_json::to_value(AppError::new(kind, "x")).unwrap();
             assert_eq!(json["kind"], name);

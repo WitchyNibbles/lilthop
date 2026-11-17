@@ -47,28 +47,80 @@ where
     }
 }
 
-/// Average the channels of each frame and push the result. Returns how many
-/// frames did not fit.
+/// How much of each channel goes into the mono signal. Made before the
+/// stream starts; nothing in it allocates afterwards.
+///
+/// For each callback buffer a channel's weight is its share of the buffer's
+/// energy, so a microphone on one input of several keeps its own level and
+/// equal channels come out as their average. The weights add up to one and
+/// hold no memory between buffers.
+pub struct ChannelMix {
+    weights: Vec<f32>,
+}
+
+impl ChannelMix {
+    pub fn new(channels: usize) -> Self {
+        let channels = channels.max(1);
+        Self {
+            weights: vec![1.0 / channels as f32; channels],
+        }
+    }
+
+    fn channels(&self) -> usize {
+        self.weights.len()
+    }
+
+    /// Set each channel's weight from the whole frames of `data`. A buffer
+    /// without energy gives every channel the same weight.
+    fn weigh<T: InputSample>(&mut self, data: &[T]) {
+        let channels = self.channels();
+        if channels == 1 {
+            return;
+        }
+        self.weights.fill(0.0);
+        for frame in data.chunks_exact(channels) {
+            for (weight, sample) in self.weights.iter_mut().zip(frame) {
+                let value = sample.to_f32();
+                *weight += value * value;
+            }
+        }
+        let total: f32 = self.weights.iter().sum();
+        if total > 0.0 && total.is_finite() {
+            self.weights.iter_mut().for_each(|weight| *weight /= total);
+        } else {
+            self.weights.fill(1.0 / channels as f32);
+        }
+    }
+
+    fn mix<T: InputSample>(&self, frame: &[T]) -> f32 {
+        frame
+            .iter()
+            .zip(&self.weights)
+            .map(|(sample, weight)| sample.to_f32() * weight)
+            .sum()
+    }
+}
+
+/// Mix the channels of each frame down to one and push the result. Returns
+/// how many frames did not fit.
 pub fn push_mono<T: InputSample, P: Producer<Item = f32>>(
     ring: &mut P,
     data: &[T],
-    channels: usize,
+    mix: &mut ChannelMix,
 ) -> usize {
-    let channels = channels.max(1);
+    let channels = mix.channels();
     let frames = data.len() / channels;
-    let scale = 1.0 / channels as f32;
-    let pushed = ring.push_iter(
-        data.chunks_exact(channels)
-            .map(|frame| frame.iter().map(|s| s.to_f32()).sum::<f32>() * scale),
-    );
+    mix.weigh(data);
+    let mix = &*mix;
+    let pushed = ring.push_iter(data.chunks_exact(channels).map(|frame| mix.mix(frame)));
     frames - pushed
 }
 
 /// One frame as a single 16-bit sample. A mono device skips the float trip.
-fn frame_to_i16<T: InputSample>(frame: &[T], scale: f32) -> i16 {
+fn frame_to_i16<T: InputSample>(frame: &[T], mix: &ChannelMix) -> i16 {
     match frame {
         [only] => only.to_i16(),
-        _ => (frame.iter().map(|s| s.to_f32()).sum::<f32>() * scale).to_i16(),
+        _ => mix.mix(frame).to_i16(),
     }
 }
 
@@ -79,14 +131,15 @@ fn frame_to_i16<T: InputSample>(frame: &[T], scale: f32) -> i16 {
 pub fn push_pcm<T: InputSample, P: Producer<Item = i16>>(
     ring: &mut P,
     data: &[T],
-    channels: usize,
+    mix: &mut ChannelMix,
 ) -> usize {
-    let channels = channels.max(1);
+    let channels = mix.channels();
     let frames = data.len() / channels;
-    let scale = 1.0 / channels as f32;
+    mix.weigh(data);
+    let mix = &*mix;
     let pushed = ring.push_iter(
         data.chunks_exact(channels)
-            .map(|frame| frame_to_i16(frame, scale)),
+            .map(|frame| frame_to_i16(frame, mix)),
     );
     frames - pushed
 }
@@ -132,13 +185,13 @@ pub trait SampleSink: Send + 'static {
 /// Mono `f32` for analysis.
 pub struct MonoSink<P> {
     pub ring: P,
-    pub channels: usize,
+    pub mix: ChannelMix,
     pub link: Link,
 }
 
 impl<P: Producer<Item = f32> + Send + 'static> SampleSink for MonoSink<P> {
     fn push<T: InputSample>(&mut self, data: &[T]) {
-        let dropped = push_mono(&mut self.ring, data, self.channels);
+        let dropped = push_mono(&mut self.ring, data, &mut self.mix);
         self.link.hand_over(dropped);
     }
 }
@@ -146,13 +199,13 @@ impl<P: Producer<Item = f32> + Send + 'static> SampleSink for MonoSink<P> {
 /// Mono 16-bit for the WAV file.
 pub struct PcmSink<P> {
     pub ring: P,
-    pub channels: usize,
+    pub mix: ChannelMix,
     pub link: Link,
 }
 
 impl<P: Producer<Item = i16> + Send + 'static> SampleSink for PcmSink<P> {
     fn push<T: InputSample>(&mut self, data: &[T]) {
-        let dropped = push_pcm(&mut self.ring, data, self.channels);
+        let dropped = push_pcm(&mut self.ring, data, &mut self.mix);
         self.link.hand_over(dropped);
     }
 }
@@ -495,27 +548,102 @@ mod tests {
 
     // ----- sample formats and downmix -----
 
+    fn mix(channels: usize) -> ChannelMix {
+        ChannelMix::new(channels)
+    }
+
+    fn assert_close(got: &[f32], want: &[f32]) {
+        assert_eq!(got.len(), want.len(), "{got:?} vs {want:?}");
+        for (g, w) in got.iter().zip(want) {
+            assert!((g - w).abs() < 1e-3, "{got:?} vs {want:?}");
+        }
+    }
+
     #[test]
-    fn stereo_is_averaged_to_mono_whatever_the_format() {
+    fn a_voice_on_one_channel_of_two_keeps_its_level() {
         let (mut tx, rx) = ring::<f32>(16);
-        assert_eq!(push_mono(&mut tx, &[0.5f32, -0.1, 0.2, 0.4], 2), 0);
-        assert_eq!(push_mono(&mut tx, &[16384i16, 0, -32768, -32768], 2), 0);
-        assert_eq!(push_mono(&mut tx, &[32768u16, 32768], 2), 0);
+
+        push_mono(&mut tx, &[0.5f32, 0.0, -0.25, 0.0, 0.1, 0.0], &mut mix(2));
+
+        assert_close(&drained(rx), &[0.5, -0.25, 0.1]);
+    }
+
+    #[test]
+    fn a_voice_on_one_channel_of_eight_keeps_its_level() {
+        let (mut tx, rx) = ring::<f32>(16);
+        let mut data = [0.0f32; 16];
+        data[3] = 0.4;
+        data[8 + 3] = -0.2;
+
+        push_mono(&mut tx, &data, &mut mix(8));
+
+        assert_close(&drained(rx), &[0.4, -0.2]);
+    }
+
+    #[test]
+    fn equal_channels_come_out_unchanged_whatever_the_format() {
+        let (mut tx, rx) = ring::<f32>(16);
+        let mut stereo = mix(2);
+        assert_eq!(push_mono(&mut tx, &[0.3f32, 0.3], &mut stereo), 0);
+        assert_eq!(
+            push_mono(&mut tx, &[16384i16, 16384, -32768, -32768], &mut stereo),
+            0
+        );
+        assert_eq!(push_mono(&mut tx, &[32768u16, 32768], &mut stereo), 0);
+
+        assert_close(&drained(rx), &[0.3, 0.5, -1.0, 0.0]);
+    }
+
+    #[test]
+    fn a_faint_hiss_on_the_other_channel_barely_moves_the_level() {
+        let (mut tx, rx) = ring::<f32>(16);
+
+        push_mono(&mut tx, &[0.5f32, 0.005, -0.5, -0.005], &mut mix(2));
 
         let got = drained(rx);
+        assert_eq!(got.len(), 2);
+        assert!((got[0] - 0.5).abs() < 0.005, "{got:?}");
+        assert!((got[1] + 0.5).abs() < 0.005, "{got:?}");
+    }
 
-        let want = [0.2, 0.3, 0.25, -1.0, 0.0];
-        assert_eq!(got.len(), want.len());
-        for (g, w) in got.iter().zip(want) {
-            assert!((g - w).abs() < 1e-3, "{g} vs {w}");
-        }
+    #[test]
+    fn silence_on_every_channel_stays_silence() {
+        let (mut tx, rx) = ring::<f32>(16);
+
+        push_mono(&mut tx, &[0.0f32; 8], &mut mix(2));
+
+        let got = drained(rx);
+        assert!(got.iter().all(|s| s.is_finite()), "{got:?}");
+        assert_eq!(got, vec![0.0; 4]);
+    }
+
+    #[test]
+    fn an_infinite_sample_does_not_spoil_the_rest_of_the_buffer() {
+        let (mut tx, rx) = ring::<f32>(16);
+
+        push_mono(&mut tx, &[f32::INFINITY, 0.0, 0.5, 0.5], &mut mix(2));
+
+        let got = drained(rx);
+        assert_eq!(got.len(), 2);
+        assert!((got[1] - 0.5).abs() < 1e-3, "{got:?}");
+    }
+
+    #[test]
+    fn a_voice_that_moves_to_the_other_channel_is_heard_at_once() {
+        let (mut tx, rx) = ring::<f32>(16);
+        let mut stereo = mix(2);
+        push_mono(&mut tx, &[0.5f32, 0.0, -0.5, 0.0], &mut stereo);
+
+        push_mono(&mut tx, &[0.0f32, 0.4, 0.0, -0.4], &mut stereo);
+
+        assert_close(&drained(rx)[2..], &[0.4, -0.4]);
     }
 
     #[test]
     fn a_trailing_half_frame_is_ignored() {
         let (mut tx, rx) = ring::<f32>(16);
 
-        let dropped = push_mono(&mut tx, &[0.2f32, 0.4, 0.9], 2);
+        let dropped = push_mono(&mut tx, &[0.2f32, 0.4, 0.9], &mut mix(2));
 
         assert_eq!(dropped, 0);
         assert_eq!(drained(rx).len(), 1);
@@ -525,7 +653,7 @@ mod tests {
     fn mono_overflow_keeps_what_fits_and_counts_the_rest() {
         let (mut tx, rx) = ring::<f32>(3);
 
-        let dropped = push_mono(&mut tx, &[0.1f32, 0.2, 0.3, 0.4, 0.5], 1);
+        let dropped = push_mono(&mut tx, &[0.1f32, 0.2, 0.3, 0.4, 0.5], &mut mix(1));
 
         assert_eq!(dropped, 2);
         assert_eq!(drained(rx), vec![0.1, 0.2, 0.3]);
@@ -534,9 +662,10 @@ mod tests {
     #[test]
     fn pcm_converts_to_16_bit_and_clips() {
         let (mut tx, rx) = ring::<i16>(16);
-        push_pcm(&mut tx, &[0.0f32, 0.5, 1.0, 3.0, -3.0], 1);
-        push_pcm(&mut tx, &[1234i16, -77], 1);
-        push_pcm(&mut tx, &[0.0f64], 1);
+        let mut mono = mix(1);
+        push_pcm(&mut tx, &[0.0f32, 0.5, 1.0, 3.0, -3.0], &mut mono);
+        push_pcm(&mut tx, &[1234i16, -77], &mut mono);
+        push_pcm(&mut tx, &[0.0f64], &mut mono);
 
         let got = drained(rx);
 
@@ -552,28 +681,45 @@ mod tests {
     fn pcm_stereo_is_mixed_down_to_one_channel() {
         let (mut tx, rx) = ring::<i16>(16);
 
-        let dropped = push_pcm(&mut tx, &[1000i16, 3000, -2000, 2000, 400, 0], 2);
+        let dropped = push_pcm(
+            &mut tx,
+            &[1000i16, 1000, -2000, -2000, 400, 400],
+            &mut mix(2),
+        );
 
         assert_eq!(dropped, 0);
-        assert_eq!(drained(rx), vec![2000, 0, 200]);
+        assert_eq!(drained(rx), vec![1000, -2000, 400]);
+    }
+
+    #[test]
+    fn pcm_keeps_the_level_of_a_voice_on_one_channel() {
+        let (mut tx, rx) = ring::<i16>(16);
+
+        push_pcm(&mut tx, &[1000i16, 0, -2000, 0, 400, 0], &mut mix(2));
+
+        let got = drained(rx);
+        assert_eq!(got.len(), 3);
+        for (g, w) in got.iter().zip([1000, -2000, 400]) {
+            assert!((i32::from(*g) - w).abs() <= 1, "{got:?}");
+        }
     }
 
     #[test]
     fn pcm_mixdown_works_for_many_channels_and_other_formats() {
         let (mut tx, rx) = ring::<i16>(16);
-        // 4 channels of f32: (0.5 + 0.5 + 0.0 + 0.0) / 4 = 0.25
-        push_pcm(&mut tx, &[0.5f32, 0.5, 0.0, 0.0], 4);
+        // 4 channels of f32, the energy all in the first two: 0.5 * 0.5 + 0.5 * 0.5
+        push_pcm(&mut tx, &[0.5f32, 0.5, 0.0, 0.0], &mut mix(4));
 
         let got = drained(rx);
 
-        assert!((i32::from(got[0]) - 8192).abs() <= 1, "{}", got[0]);
+        assert!((i32::from(got[0]) - 16384).abs() <= 1, "{}", got[0]);
     }
 
     #[test]
     fn pcm_overflow_counts_frames_not_samples() {
         let (mut tx, rx) = ring::<i16>(2);
 
-        let dropped = push_pcm(&mut tx, &[1i16, 1, 2, 2, 3, 3, 4, 4], 2);
+        let dropped = push_pcm(&mut tx, &[1i16, 1, 2, 2, 3, 3, 4, 4], &mut mix(2));
 
         assert_eq!(dropped, 2);
         assert_eq!(drained(rx), vec![1, 2]);
@@ -583,10 +729,10 @@ mod tests {
     fn pcm_ignores_a_trailing_half_frame() {
         let (mut tx, rx) = ring::<i16>(16);
 
-        let dropped = push_pcm(&mut tx, &[1000i16, 3000, 7], 2);
+        let dropped = push_pcm(&mut tx, &[0i16, 1000, 30000], &mut mix(2));
 
         assert_eq!(dropped, 0);
-        assert_eq!(drained(rx), vec![2000]);
+        assert_eq!(drained(rx), vec![1000]);
     }
 
     #[test]

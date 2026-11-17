@@ -301,7 +301,7 @@ The signature. A canvas over an 8 second sweep on a log pitch axis. The thread i
 
 ### Readout and zone mark
 
-The label sits over a large mono number with its unit. With no reading it shows three dashes in the same slot, and a reading with nothing fresh dims in place. Beside it, a drawn mark shows a bar with a chevron above and below. The chevron goes bold above or below the band, and the bar fills in the band. Words in the status line say the same thing.
+The label sits over a large mono number with its unit. With no reading it shows three dashes in the same slot, and a reading with nothing fresh dims in place. Beside it, a drawn mark shows a bar with a chevron above and below. The chevron goes bold above or below the band, and the bar fills in the band. Words in the status line say the same thing. In a narrow gutter the status text scales down, so its longest word still fits the three lines kept for it.
 
 ### Strip notices
 

@@ -28,7 +28,6 @@ export const es: Record<keyof typeof en, string> = {
   "common.maxHz": "Máx Hz",
   "common.goals": "Metas de enfoque",
   "common.save": "Guardar",
-  "common.stop": "Parar",
   "common.delete": "Eliminar",
   "common.play": "Reproducir",
   "common.default": "Predeterminado",
@@ -61,6 +60,9 @@ export const es: Record<keyof typeof en, string> = {
   "exercise.again": "Otra vez",
   "exercise.needsRange":
     "Define primero tu rango para tener con qué practicar.",
+  "exercise.openSettings": "Abrir Ajustes",
+  "exercise.discard": "Descartar",
+  "exercise.discarded": "Sesión descartada. No se guardó nada.",
   "metronome.label": "Metrónomo",
   "metronome.tempo": "Tempo, pulsos por minuto",
   "result.average": "Tono medio {mean} Hz",
@@ -76,6 +78,7 @@ export const es: Record<keyof typeof en, string> = {
     "No se cambió nada. Inténtalo de nuevo y, si sigue pasando, cierra la app y vuelve a abrirla.",
   "load.stillFailed": "Sigue sin poder leerse.",
   "load.moveTitle": "Tus datos anteriores aún no se han movido",
+  "load.newerTitle": "Estos datos son de un Lilthop más nuevo",
   "load.moveStillFailed":
     "Sigue sin poder moverse. Tus datos siguen intactos donde estaban.",
   "load.startFresh": "Empezar de cero",
@@ -158,6 +161,8 @@ export const es: Record<keyof typeof en, string> = {
   "error.not_found": "No se encontró ese elemento.",
   "error.io": "No se pudo leer o escribir un archivo.",
   "error.database": "No se pudieron leer o guardar los datos.",
+  "error.newer_data":
+    "Tus datos se guardaron con una versión más nueva de Lilthop y esta versión no puede leerlos. No se cambió nada. Instala la versión más reciente para abrirlos.",
   "error.invalid_backup":
     "No se pudo usar esa copia de seguridad. No se cambió nada.",
   "error.device_lost":

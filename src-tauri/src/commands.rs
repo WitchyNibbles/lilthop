@@ -12,7 +12,7 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::audio::capture::input_device_names;
-use crate::audio::{AudioState, Report, StreamInfo};
+use crate::audio::{AudioState, RecordingStarted, Report, StreamInfo};
 use crate::error::{AppError, AppResult, ErrorKind};
 use crate::paths::recording_path;
 use crate::storage::export::{self, ExportFormat};
@@ -196,12 +196,6 @@ pub struct PlaybackEnded {
     pub name: String,
 }
 
-/// Payload of `start_recording`.
-#[derive(Serialize)]
-pub struct RecordingStarted {
-    pub name: String,
-}
-
 /// Where workers send problems that happen while audio is running.
 pub fn audio_report(app: &AppHandle) -> Report {
     let app = app.clone();
@@ -266,11 +260,7 @@ pub async fn start_recording(
 ) -> AppResult<RecordingStarted> {
     let audio = audio.inner().clone();
     let dir = storage.recordings_dir();
-    blocking(move || {
-        let name = audio.start_recording(dir, now_ms(), device_name, audio_report(&app))?;
-        Ok(RecordingStarted { name })
-    })
-    .await
+    blocking(move || audio.start_recording(dir, now_ms(), device_name, audio_report(&app))).await
 }
 
 #[tauri::command]

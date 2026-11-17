@@ -1,8 +1,12 @@
 name: CI
 
+# Tags are not listed: release.yml calls this workflow for them, so the same
+# checks run once before a release is built.
 on:
   push:
+    branches: ["**"]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read

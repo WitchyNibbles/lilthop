@@ -18,8 +18,8 @@ use ringbuf::traits::{Consumer, Split};
 use ringbuf::{HeapCons, HeapRb};
 
 use super::capture::{
-    Capture, Link, Opened, PcmSink, START_TIMEOUT, build_input_stream, open_input_device, play,
-    spawn_capture, stream_error_handler, take_dropped,
+    Capture, ChannelMix, Link, Opened, PcmSink, START_TIMEOUT, build_input_stream,
+    open_input_device, play, spawn_capture, stream_error_handler, take_dropped,
 };
 use super::{AudioErrorKind, AudioIssue, AudioSource, Report};
 use crate::error::{AppError, AppResult, ErrorKind};
@@ -247,6 +247,7 @@ fn close<W: Write + Seek>(
 /// What `start` learns once the stream plays.
 struct Started {
     name: String,
+    fell_back: bool,
 }
 
 /// A running recording.
@@ -254,11 +255,18 @@ pub struct RecorderSession {
     capture: Capture<Finished>,
     name: String,
     path: PathBuf,
+    fell_back: bool,
 }
 
 impl RecorderSession {
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// True when the requested microphone was missing and another one is
+    /// recording in its place.
+    pub fn fell_back(&self) -> bool {
+        self.fell_back
     }
 
     /// Stop, close the file and describe it. If writing failed along the
@@ -327,6 +335,7 @@ fn open_stream(
     path: PathBuf,
 ) -> AppResult<Opened<Stream, Started, Job<BufWriter<File>>>> {
     let sample_rate = input.config.sample_rate().0;
+    let fell_back = input.choice.fell_back;
     // The device may have many channels; the recording is mono.
     let recorder = WavRecorder::new(BufWriter::new(file), 1, sample_rate)?;
     let ring_len = sample_rate as usize * RING_SECONDS;
@@ -334,7 +343,7 @@ fn open_stream(
     let (link, dropped) = Link::new(thread::current());
     let sink = PcmSink {
         ring: producer,
-        channels: usize::from(input.config.channels()),
+        mix: ChannelMix::new(usize::from(input.config.channels())),
         link,
     };
     let stream = build_input_stream(
@@ -346,7 +355,7 @@ fn open_stream(
     play(&stream)?;
     Ok(Opened {
         guard: stream,
-        info: Started { name },
+        info: Started { name, fell_back },
         job: Job {
             ring: consumer,
             dropped,
@@ -389,6 +398,7 @@ fn start_with<G: 'static, W: Write + Seek + Send + 'static>(
         capture,
         path: dir.join(&started.name),
         name: started.name,
+        fell_back: started.fell_back,
     })
 }
 
@@ -678,7 +688,10 @@ mod tests {
         let (job, _) = job_with(BufWriter::new(file), 1, &samples, report);
         let released = Arc::new(AtomicBool::new(false));
         let guard = FakeStream(Arc::clone(&released));
-        let started = Started { name: name.clone() };
+        let started = Started {
+            name: name.clone(),
+            fell_back: false,
+        };
 
         let session = start_with(
             dir.path().to_path_buf(),
@@ -706,12 +719,41 @@ mod tests {
     }
 
     #[test]
+    fn a_session_says_when_it_fell_back_to_another_microphone() {
+        let dir = tempdir().unwrap();
+        let (name, file) = create_unique(dir.path(), 6000).unwrap();
+        let (report, _) = collecting_report();
+        let (job, _) = job_with(BufWriter::new(file), 1, &[], report);
+        let started = Started {
+            name,
+            fell_back: true,
+        };
+
+        let session = start_with(
+            dir.path().to_path_buf(),
+            move || {
+                Ok(Opened {
+                    guard: (),
+                    info: started,
+                    job,
+                })
+            },
+            Duration::from_secs(2),
+        )
+        .unwrap();
+
+        assert!(session.fell_back());
+        session.stop().unwrap();
+    }
+
+    #[test]
     fn a_session_whose_disk_filled_up_says_so_on_stop() {
         let dir = tempdir().unwrap();
         let (report, seen) = collecting_report();
         let (job, _) = job_with(full_disk(5000), 1, &ramp(20_000), report);
         let started = Started {
             name: "rec_1.wav".into(),
+            fell_back: false,
         };
 
         let session = start_with(
@@ -804,6 +846,7 @@ mod tests {
         let made = path.clone();
         let started = Started {
             name: "rec_77.wav".into(),
+            fell_back: false,
         };
 
         let outcome = start_with(

@@ -1,12 +1,22 @@
-import { useApp, useMicContext } from "../app/appContext";
+import { useApp, useLoadFailed, useMicContext } from "../app/appContext";
 import { Icon } from "../art/icons";
 import { NOTICE_MESSAGE } from "../domain/safety";
-import { commandErrorMessage } from "../lib/tauri";
+import { AppCommandError, commandErrorMessage } from "../lib/tauri";
 import { useLive } from "../live/useLive";
 import { micIssueMessage } from "../mic/useMic";
 
+// The load-failed screen already says what its own failed read said, so the row stays quiet on it.
+function sameKind(issue: unknown, readError: unknown): boolean {
+  return (
+    issue instanceof AppCommandError &&
+    readError instanceof AppCommandError &&
+    issue.kind === readError.kind
+  );
+}
+
 export function useAlert(): { message: string; dismiss: () => void } | null {
-  const { dataIssue, dismissDataIssue, t } = useApp();
+  const { dataIssue, dismissDataIssue, readError, t } = useApp();
+  const loadFailed = useLoadFailed();
   const mic = useMicContext();
   if (mic.issue !== null) {
     return {
@@ -15,6 +25,7 @@ export function useAlert(): { message: string; dismiss: () => void } | null {
     };
   }
   if (dataIssue === null) return null;
+  if (loadFailed && sameKind(dataIssue, readError)) return null;
   return {
     message: commandErrorMessage(dataIssue, t),
     dismiss: dismissDataIssue,
