@@ -45,7 +45,15 @@ type SessionAction =
       readonly pitchMeanHz: number;
     }
   | { readonly type: "save"; readonly save: SaveState }
-  | { readonly type: "reset"; readonly discarded: boolean };
+  | { readonly type: "reset"; readonly discarded: boolean }
+  | { readonly type: "forgetDiscard" };
+
+/** Only an idle state that still carries the note changes; a run or a result comes back as it was. */
+function withoutDiscardNote(state: SessionState): SessionState {
+  return state.phase === "idle" && state.discarded
+    ? { phase: "idle", discarded: false }
+    : state;
+}
 
 function sessionReducer(
   state: SessionState,
@@ -70,6 +78,8 @@ function sessionReducer(
       return state.phase === "result" ? { ...state, save: action.save } : state;
     case "reset":
       return { phase: "idle", discarded: action.discarded };
+    case "forgetDiscard":
+      return withoutDiscardNote(state);
   }
 }
 
@@ -88,6 +98,8 @@ export interface Session {
   readonly reset: () => void;
   /** Like `reset`, but a running session it drops is marked `discarded`, so the strip can say so. */
   readonly discard: () => void;
+  /** Clears the discard note and nothing else, so it stays on the screen where the session was dropped. */
+  readonly forgetDiscard: () => void;
   readonly retrySave: () => void;
 }
 
@@ -166,12 +178,16 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
     dispatch({ type: "reset", discarded: dropRun() });
   }, [dropRun]);
 
+  const forgetDiscard = useCallback(() => {
+    dispatch({ type: "forgetDiscard" });
+  }, []);
+
   const retrySave = useCallback(() => {
     if (unsaved.current !== null) void save(unsaved.current);
   }, [save]);
 
   return useMemo(
-    () => ({ state, start, finish, reset, discard, retrySave }),
-    [state, start, finish, reset, discard, retrySave],
+    () => ({ state, start, finish, reset, discard, forgetDiscard, retrySave }),
+    [state, start, finish, reset, discard, forgetDiscard, retrySave],
   );
 }

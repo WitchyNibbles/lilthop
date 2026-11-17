@@ -53,6 +53,7 @@ export function AppProvider({ children }: { readonly children: ReactNode }) {
   useEffect(() => startTimingProbe(feed), [feed]);
   const mic = useMic(feed, band);
   const session = useSession(feed, data.refreshResults);
+  const { forgetDiscard } = session;
   const recordings = useRecordings(mic.device);
 
   const [safetyPassed, setSafetyPassed] = useState(false);
@@ -60,13 +61,22 @@ export function AppProvider({ children }: { readonly children: ReactNode }) {
     setSafetyPassed(true);
   }, []);
 
-  const openScreen = useCallback((screen: Screen) => {
-    setRoute((current) => ({ ...current, screen }));
-  }, []);
+  // The discard note belongs to the screen where the session was dropped, so moving on clears it.
+  const openScreen = useCallback(
+    (screen: Screen) => {
+      forgetDiscard();
+      setRoute((current) => ({ ...current, screen }));
+    },
+    [forgetDiscard],
+  );
 
-  const openExercise = useCallback((exercise: Exercise) => {
-    setRoute({ screen: "practice", exercise });
-  }, []);
+  const openExercise = useCallback(
+    (exercise: Exercise) => {
+      forgetDiscard();
+      setRoute({ screen: "practice", exercise });
+    },
+    [forgetDiscard],
+  );
 
   const app = useMemo<AppValue>(
     () => ({
