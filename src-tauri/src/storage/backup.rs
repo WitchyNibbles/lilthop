@@ -31,7 +31,11 @@ pub struct BackupData {
     pub recording_meta: Vec<RecordingMeta>,
 }
 
-/// Caps on what a backup file may ask us to read.
+/// Caps on what a backup file may ask us to read. A recording may be as big as
+/// a WAV header can describe, so a backup the app made is never refused for the
+/// size of a recording. The total of all recordings may grow to the size of the
+/// backup file itself (see `with_room_for`). Still refused: more than 19,999
+/// recordings, or more than 64 MiB of results.
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
     pub max_entries: usize,
@@ -45,8 +49,20 @@ impl Default for Limits {
         Self {
             max_entries: 20_000,
             max_data_bytes: 64 * 1024 * 1024,
-            max_wav_bytes: 1024 * 1024 * 1024,
+            max_wav_bytes: u64::from(u32::MAX) + 8,
             max_total_bytes: 4 * 1024 * 1024 * 1024,
+        }
+    }
+}
+
+impl Limits {
+    /// The app stores recordings uncompressed, so its own backup holds no more
+    /// recording bytes than the file is long. Let the total cap grow to that.
+    /// A file that unpacks to more than itself is still held to the plain cap.
+    fn with_room_for(self, file_len: u64) -> Self {
+        Self {
+            max_total_bytes: self.max_total_bytes.max(file_len),
+            ..self
         }
     }
 }
@@ -142,6 +158,7 @@ pub fn restore_with(
 ) -> AppResult<RestoreSummary> {
     let mut file = File::open(src)?;
     if is_zip(&mut file)? {
+        let limits = &limits.with_room_for(file.metadata()?.len());
         let mut archive = zip::ZipArchive::new(file)?;
         let wavs = check_entries(&mut archive, limits)?;
         let mut data = read_data(&mut archive, limits)?;
@@ -201,7 +218,6 @@ fn check_entries(archive: &mut ZipArchive<File>, limits: &Limits) -> AppResult<V
     let (mut data_files, mut wavs, mut total) = (0, Vec::<String>::new(), 0u64);
     for index in 0..archive.len() {
         let (name, size) = entry_name_and_size(archive, index)?;
-        total = total.saturating_add(size);
         match classify(&name)? {
             Entry::Data => {
                 data_files += 1;
@@ -213,6 +229,7 @@ fn check_entries(archive: &mut ZipArchive<File>, limits: &Limits) -> AppResult<V
                     return Err(AppError::invalid_backup("the backup lists a file twice"));
                 }
                 check_size(size, limits.max_wav_bytes)?;
+                total = total.saturating_add(size);
                 wavs.push(wav);
             }
             Entry::Folder => {}
@@ -889,10 +906,6 @@ mod tests {
                 ..roomy
             },
             Limits {
-                max_total_bytes: 100,
-                ..roomy
-            },
-            Limits {
                 max_entries: 1,
                 ..roomy
             },
@@ -904,6 +917,56 @@ mod tests {
             assert_eq!(snapshot(&e), before);
         }
         restore_with(&e.base, &e.conn, &zip_path, NOW, &roomy).unwrap();
+    }
+
+    #[test]
+    fn a_backup_the_app_made_restores_even_when_it_is_bigger_than_the_total_cap() {
+        let e = filled();
+        // Enough results that data.json unpacks to far more than the zip adds around it.
+        for i in 0..300 {
+            db::insert_result(&e.conn, &new_result("glides", 60.0), T0 + 1_000 + i).unwrap();
+        }
+        let (_o, zip_path) = out_file("big.zip");
+        create_to(&e.base, &e.conn, &zip_path).unwrap();
+        let fresh = env();
+        let tight = Limits {
+            max_total_bytes: 100,
+            ..Limits::default()
+        };
+
+        let summary = restore_with(&fresh.base, &fresh.conn, &zip_path, NOW, &tight).unwrap();
+
+        assert_eq!((summary.results, summary.recordings), (303, 2));
+    }
+
+    #[test]
+    fn the_longest_take_the_recorder_can_write_fits_the_per_recording_cap() {
+        assert!(Limits::default().max_wav_bytes >= crate::audio::recorder::MAX_DATA_BYTES + 44);
+    }
+
+    #[test]
+    fn recordings_that_unpack_to_more_than_the_cap_and_the_file_are_rejected() {
+        let e = env();
+        let (_o, zip_path) = out_file("packed.zip");
+        let data = data_json(serde_json::json!([good_row()]));
+        // 60 kB of zeros deflates to a few hundred bytes.
+        zip_with(
+            &zip_path,
+            &[
+                ("data.json", &data),
+                ("recordings/a.wav", &zero_wav(60_000)),
+            ],
+        );
+        let limits = Limits {
+            max_total_bytes: 100,
+            ..Limits::default()
+        };
+
+        let before = snapshot(&e);
+        let err = restore_with(&e.base, &e.conn, &zip_path, NOW, &limits).unwrap_err();
+
+        assert_eq!(err.kind(), ErrorKind::InvalidBackup);
+        assert_eq!(snapshot(&e), before);
     }
 
     /// A WAV that is small on disk and huge once unpacked: a header and zeros.
