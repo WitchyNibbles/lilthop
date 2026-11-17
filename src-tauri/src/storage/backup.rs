@@ -601,6 +601,43 @@ mod tests {
     }
 
     #[test]
+    fn a_backup_made_by_version_0_1_0_still_restores() {
+        let e = env();
+        let (_o, zip_path) = out_file("old.zip");
+        fs::write(
+            &zip_path,
+            include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/backup-0.1.0.zip"
+            )),
+        )
+        .unwrap();
+
+        let summary = restore_from(&e.base, &e.conn, &zip_path, NOW).unwrap();
+
+        assert_eq!(
+            (summary.results, summary.recordings, summary.profile),
+            (3, 2, true)
+        );
+        assert_eq!(
+            fs::metadata(recordings_dir(&e.base).join("rec_1.wav"))
+                .unwrap()
+                .len(),
+            1644
+        );
+        assert_eq!(
+            fs::metadata(recordings_dir(&e.base).join("rec_2.wav"))
+                .unwrap()
+                .len(),
+            3244
+        );
+        assert_eq!(
+            db::get_meta(&e.conn, "rec_1.wav").unwrap().unwrap().note,
+            "first take"
+        );
+    }
+
+    #[test]
     fn restoring_a_profile_replaces_the_baseline() {
         let src = filled();
         let (_o, zip_path) = out_file("backup.zip");
