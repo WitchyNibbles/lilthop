@@ -35,5 +35,8 @@ describe("when the data is from a newer version", () => {
       stage().getByRole("heading", { name: t("load.newerTitle") }),
     ).toBeInTheDocument();
     expect(tryAgainButton()).toBeEnabled();
+    expect(
+      stage().queryByRole("button", { name: t("load.startFresh") }),
+    ).toBeNull();
   });
 });
