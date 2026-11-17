@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../app/appContext";
-import type { MessageKey } from "../i18n";
+import type { MessageKey, Translator } from "../i18n";
 import { AppCommandError, startFresh } from "../lib/tauri";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -74,6 +74,18 @@ function failureOf(error: unknown): Failure {
   return "read";
 }
 
+/** A read that failed on the data itself is named before the plain words, so it is not a mystery. */
+const REASON: ReadonlyMap<string, MessageKey> = new Map<string, MessageKey>([
+  ["database", "error.database"],
+  ["io", "error.io"],
+]);
+
+function alertOf(error: unknown, copy: FailureCopy, t: Translator): string {
+  const reason =
+    error instanceof AppCommandError ? REASON.get(error.kind) : undefined;
+  return reason === undefined ? t(copy.body) : `${t(reason)} ${t(copy.body)}`;
+}
+
 /** Setup would write a blank profile over the real one, so this stands in until a read works. */
 export function LoadFailedScreen() {
   const { openScreen, profileRead, readError, reloadData, t } = useApp();
@@ -103,7 +115,7 @@ export function LoadFailedScreen() {
     <div className="onboarding">
       <h1>{t(copy.title)}</h1>
       <div className="step-body">
-        <p role="alert">{t(copy.body)}</p>
+        <p role="alert">{alertOf(readError, copy, t)}</p>
         {tried && !retrying ? <p role="status">{t(copy.stillFailed)}</p> : null}
         {moveFailed ? <p>{t("load.startFreshNote")}</p> : null}
         {freshFailed ? <p role="status">{t("load.startFreshFailed")}</p> : null}
