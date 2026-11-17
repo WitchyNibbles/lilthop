@@ -19,6 +19,13 @@ export interface StreamInfo {
   readonly fellBack: boolean;
 }
 
+/** Answer to `start_recording`. */
+export interface RecordingStarted {
+  readonly name: string;
+  /** The chosen microphone was missing, so another one is recording. */
+  readonly fellBack: boolean;
+}
+
 export interface RecordingInfo {
   /** Bare file name: the only handle the webview gets. */
   readonly name: string;

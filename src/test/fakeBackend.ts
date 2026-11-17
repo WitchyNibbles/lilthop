@@ -46,7 +46,7 @@ function defaultResponses(): Map<string, Respond> {
     list_recordings: [],
     set_recording_meta: undefined,
     delete_recording: undefined,
-    start_recording: { name: "rec_new.wav" },
+    start_recording: { name: "rec_new.wav", fellBack: false },
     stop_recording: recording({ name: "rec_new.wav" }),
     play_recording: undefined,
     stop_playback: undefined,
