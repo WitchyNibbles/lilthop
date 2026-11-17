@@ -8,7 +8,7 @@ It is still early days, so please be gentle with it, and with your voice.
 
 ### Fixed
 
-- If your saved data can't be read, the app now opens and tells you what is wrong. In 0.1.0 it could fail to start without a word.
+- If your saved data can't be read, the app now opens and says so. In 0.1.0 it could fail to start without a word.
 - Large backups restore. Before, a backup with many hours of recordings could be refused by the same app that made it.
 - A microphone on one input of an audio interface is heard at its real level, in the live trace and in recordings.
 - The status next to the trace is no longer cut off at the default window size. This was worst in Spanish.
@@ -56,7 +56,7 @@ Please do not attach real recordings or personal details.
 
 Lilthop es una app gratuita para practicar tu voz por tu cuenta, pensada para mujeres trans y personas transfemeninas. Todo se queda en tu ordenador: sin cuenta, sin telemetría.
 
-Novedades de la 0.1.1: la app se abre y te explica qué pasa si no puede leer tus datos, y las copias de seguridad grandes ya se restauran. Un micrófono en una sola entrada de una interfaz de audio se oye a su nivel real, y el texto de estado ya no se corta en la ventana por defecto.
+Novedades de la 0.1.1: la app se abre y te avisa si no puede leer tus datos, y las copias de seguridad grandes ya se restauran. Un micrófono en una sola entrada de una interfaz de audio se oye a su nivel real, y el texto de estado ya no se corta en la ventana por defecto.
 
 No hay ningún apoyo profesional detrás y no sustituye a la terapia de voz. Ninguna persona profesional la ha revisado. Si te duele, detente. Por ahora solo se ha probado con una voz.
 
