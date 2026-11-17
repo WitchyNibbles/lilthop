@@ -174,15 +174,31 @@ describe("a session", () => {
     );
   });
 
-  it("stop throws the session away and saves nothing", async () => {
+  it("discard throws the session away, says so and saves nothing", async () => {
     await openPractice("pitch_awareness");
     startSession();
     play(steadyHz(10, 200));
-    fireEvent.click(stage().getByRole("button", { name: t("common.stop") }));
+    fireEvent.click(
+      stage().getByRole("button", { name: t("exercise.discard") }),
+    );
     expect(backend.callsTo("save_result")).toHaveLength(0);
     expect(
       stage().getByRole("button", { name: "Start session" }),
     ).toBeInTheDocument();
+    expect(stage().getByText(t("exercise.discarded"))).toBeInTheDocument();
+    startSession();
+    expect(stage().queryByText(t("exercise.discarded"))).toBeNull();
+  });
+
+  it("stops saying a session was discarded once another exercise is picked", async () => {
+    await openPractice("pitch_awareness");
+    startSession();
+    fireEvent.click(
+      stage().getByRole("button", { name: t("exercise.discard") }),
+    );
+    expect(stage().getByText(t("exercise.discarded"))).toBeInTheDocument();
+    pickExercise("glides");
+    expect(stage().queryByText(t("exercise.discarded"))).toBeNull();
   });
 
   it("counts down from the frames and finishes by itself", async () => {

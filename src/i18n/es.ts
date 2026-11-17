@@ -28,7 +28,6 @@ export const es: Record<keyof typeof en, string> = {
   "common.maxHz": "Máx Hz",
   "common.goals": "Metas de enfoque",
   "common.save": "Guardar",
-  "common.stop": "Parar",
   "common.delete": "Eliminar",
   "common.play": "Reproducir",
   "common.default": "Predeterminado",
@@ -62,6 +61,8 @@ export const es: Record<keyof typeof en, string> = {
   "exercise.needsRange":
     "Define primero tu rango para tener con qué practicar.",
   "exercise.openSettings": "Abrir Ajustes",
+  "exercise.discard": "Descartar",
+  "exercise.discarded": "Sesión descartada. No se guardó nada.",
   "metronome.label": "Metrónomo",
   "metronome.tempo": "Tempo, pulsos por minuto",
   "result.average": "Tono medio {mean} Hz",

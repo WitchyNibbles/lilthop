@@ -6,8 +6,10 @@ import {
   NOTICE_MESSAGE,
   type NoticeId,
 } from "../domain/safety";
+import type { Translator } from "../i18n";
 import { useLive } from "../live/useLive";
 import { useAlert } from "../shell/AlertBanner";
+import type { SessionState } from "./useSession";
 
 interface SlotContent {
   readonly notice: NoticeId | null;
@@ -27,9 +29,20 @@ function useSlotContent(): SlotContent {
   if (alerted) return { notice, lines: [] };
   if (state.phase === "result" && state.outcome.status === "scored")
     return { notice, lines: [t("result.oneTake"), t("safety.s3")] };
-  if (band === null)
-    return { notice, lines: [t("exercise.needsRange")], opensSettings: true };
-  return { notice, lines: [] };
+  return { notice, ...neutralContent(state, band !== null, t) };
+}
+
+/** The missing range goes first, as it is the line with somewhere to go; then a dropped session. */
+function neutralContent(
+  state: SessionState,
+  hasRange: boolean,
+  t: Translator,
+): Omit<SlotContent, "notice"> {
+  if (!hasRange)
+    return { lines: [t("exercise.needsRange")], opensSettings: true };
+  if (state.phase === "idle" && state.discarded)
+    return { lines: [t("exercise.discarded")] };
+  return { lines: [] };
 }
 
 function OpenSettingsButton() {

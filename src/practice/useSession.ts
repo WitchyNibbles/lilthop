@@ -20,7 +20,8 @@ export type SaveState =
   | { readonly kind: "failed"; readonly error: unknown };
 
 export type SessionState =
-  | { readonly phase: "idle" }
+  /** `discarded`: a running session was just dropped, so the strip can say nothing was saved. */
+  | { readonly phase: "idle"; readonly discarded: boolean }
   | {
       readonly phase: "running";
       readonly exercise: Exercise;
@@ -44,7 +45,7 @@ type SessionAction =
       readonly pitchMeanHz: number;
     }
   | { readonly type: "save"; readonly save: SaveState }
-  | { readonly type: "reset" };
+  | { readonly type: "reset"; readonly discarded: boolean };
 
 function sessionReducer(
   state: SessionState,
@@ -68,7 +69,7 @@ function sessionReducer(
     case "save":
       return state.phase === "result" ? { ...state, save: action.save } : state;
     case "reset":
-      return { phase: "idle" };
+      return { phase: "idle", discarded: action.discarded };
   }
 }
 
@@ -83,14 +84,17 @@ export interface Session {
   readonly state: SessionState;
   readonly start: (exercise: Exercise, context: ScoringContext) => void;
   readonly finish: () => void;
-  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing. */
+  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing, and says if it dropped a session. */
   readonly reset: () => void;
   readonly retrySave: () => void;
 }
 
 /** Runs one exercise: records frames, scores at the end, saves only what was scored. */
 export function useSession(feed: LiveFeed, onSaved: () => void): Session {
-  const [state, dispatch] = useReducer(sessionReducer, { phase: "idle" });
+  const [state, dispatch] = useReducer(sessionReducer, {
+    phase: "idle",
+    discarded: false,
+  });
   const run = useRef<ActiveRun | null>(null);
   const unsaved = useRef<NewResult | null>(null);
 
@@ -143,10 +147,11 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
   );
 
   const reset = useCallback(() => {
+    const discarded = run.current !== null;
     run.current?.leaveFeed();
     run.current = null;
     unsaved.current = null;
-    dispatch({ type: "reset" });
+    dispatch({ type: "reset", discarded });
   }, []);
 
   const retrySave = useCallback(() => {

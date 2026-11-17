@@ -65,7 +65,7 @@ export function SessionControls({ exercise }: { readonly exercise: Exercise }) {
         onClick={session.reset}
         type="button"
       >
-        {t("common.stop")}
+        {t("exercise.discard")}
       </button>
       <span className="session-spacer" />
       {exercise.metronomeBpm === undefined ? null : (

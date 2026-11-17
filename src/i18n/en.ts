@@ -26,7 +26,6 @@ export const en = {
   "common.maxHz": "Max Hz",
   "common.goals": "Focus goals",
   "common.save": "Save",
-  "common.stop": "Stop",
   "common.delete": "Delete",
   "common.play": "Play",
   "common.default": "Default",
@@ -60,6 +59,8 @@ export const en = {
   "exercise.needsRange":
     "Set your range first, so there's something to practice against.",
   "exercise.openSettings": "Open Settings",
+  "exercise.discard": "Discard",
+  "exercise.discarded": "Session discarded. Nothing was saved.",
   "metronome.label": "Metronome",
   "metronome.tempo": "Tempo, beats per minute",
   "result.average": "Average pitch {mean} Hz",
