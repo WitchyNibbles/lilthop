@@ -20,7 +20,7 @@ export type SaveState =
   | { readonly kind: "failed"; readonly error: unknown };
 
 export type SessionState =
-  /** `discarded`: `discard()` just dropped a running session, so the strip can say nothing was saved. */
+  /** `discarded`: `reset()` just dropped a running session, so the strip can say nothing was saved. */
   | { readonly phase: "idle"; readonly discarded: boolean }
   | {
       readonly phase: "running";
@@ -94,10 +94,11 @@ export interface Session {
   readonly state: SessionState;
   readonly start: (exercise: Exercise, context: ScoringContext) => void;
   readonly finish: () => void;
-  /** Drops a running session, or leaves a result, and goes back to idle. Saves nothing and says nothing. */
+  /**
+   * Drops a running session, or leaves a result, and goes back to idle, saving nothing. Only a
+   * dropped running session is marked `discarded`, so the strip can say so.
+   */
   readonly reset: () => void;
-  /** Like `reset`, but a running session it drops is marked `discarded`, so the strip can say so. */
-  readonly discard: () => void;
   /** Clears the discard note and nothing else, so it stays on the screen where the session was dropped. */
   readonly forgetDiscard: () => void;
   readonly retrySave: () => void;
@@ -170,11 +171,6 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
   }, []);
 
   const reset = useCallback(() => {
-    dropRun();
-    dispatch({ type: "reset", discarded: false });
-  }, [dropRun]);
-
-  const discard = useCallback(() => {
     dispatch({ type: "reset", discarded: dropRun() });
   }, [dropRun]);
 
@@ -187,7 +183,7 @@ export function useSession(feed: LiveFeed, onSaved: () => void): Session {
   }, [save]);
 
   return useMemo(
-    () => ({ state, start, finish, reset, discard, forgetDiscard, retrySave }),
-    [state, start, finish, reset, discard, forgetDiscard, retrySave],
+    () => ({ state, start, finish, reset, forgetDiscard, retrySave }),
+    [state, start, finish, reset, forgetDiscard, retrySave],
   );
 }
