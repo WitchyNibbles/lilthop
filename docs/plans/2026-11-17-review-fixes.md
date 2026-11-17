@@ -1,6 +1,6 @@
 # Review Fixes for 0.1.1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** done. Every task below is in 0.1.1. The step boxes were not ticked as the work went, so they still show as open.
 
 **Goal:** Fix the ten findings from the 2026-11-17 review that were marked "fix first" and "next", then ship them as version 0.1.1.
 
