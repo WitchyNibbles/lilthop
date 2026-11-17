@@ -618,6 +618,17 @@ mod tests {
     }
 
     #[test]
+    fn an_infinite_sample_does_not_spoil_the_rest_of_the_buffer() {
+        let (mut tx, rx) = ring::<f32>(16);
+
+        push_mono(&mut tx, &[f32::INFINITY, 0.0, 0.5, 0.5], &mut mix(2));
+
+        let got = drained(rx);
+        assert_eq!(got.len(), 2);
+        assert!((got[1] - 0.5).abs() < 1e-3, "{got:?}");
+    }
+
+    #[test]
     fn a_voice_that_moves_to_the_other_channel_is_heard_at_once() {
         let (mut tx, rx) = ring::<f32>(16);
         let mut stereo = mix(2);
