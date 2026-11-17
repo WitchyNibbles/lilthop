@@ -114,16 +114,20 @@
 .live-status {
   height: calc(1.75rem * 3);
   overflow: hidden;
-  /* The longest one-word status ("Escuchando…") has to fit the narrowest gutter, so the size follows the gutter. */
-  font-size: min(
-    var(--text-title),
-    calc((var(--live-column-width) - 2 * var(--space-3)) * 0.115)
-  );
+  font-size: var(--text-title);
   font-weight: 650;
   line-height: calc(1.75 / 1.375);
   color: var(--text);
   display: flex;
   align-items: center;
+}
+
+.live-column .live-status {
+  /* The longest one-word status ("Escuchando…") has to fit the narrowest gutter, so the size follows the gutter. */
+  font-size: min(
+    var(--text-title),
+    calc((var(--live-column-width) - 2 * var(--space-3)) * 0.115)
+  );
 }
 
 .zone-mark {
@@ -384,7 +388,7 @@
     border-left: 0;
   }
 
-  .live-status {
+  .live-column .live-status {
     font-size: var(--text-title);
   }
 
