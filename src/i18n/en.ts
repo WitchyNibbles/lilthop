@@ -59,6 +59,7 @@ export const en = {
   "exercise.again": "Go again",
   "exercise.needsRange":
     "Set your range first, so there's something to practice against.",
+  "exercise.openSettings": "Open Settings",
   "metronome.label": "Metronome",
   "metronome.tempo": "Tempo, beats per minute",
   "result.average": "Average pitch {mean} Hz",

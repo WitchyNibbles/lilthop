@@ -197,6 +197,15 @@
   color: var(--gold);
 }
 
+.notice-card p {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-card .btn {
+  flex: none;
+}
+
 .notice-slot[data-notice="restBreak"] .icon {
   color: var(--pink);
 }

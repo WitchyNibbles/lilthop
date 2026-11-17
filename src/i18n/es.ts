@@ -61,6 +61,7 @@ export const es: Record<keyof typeof en, string> = {
   "exercise.again": "Otra vez",
   "exercise.needsRange":
     "Define primero tu rango para tener con qué practicar.",
+  "exercise.openSettings": "Abrir Ajustes",
   "metronome.label": "Metrónomo",
   "metronome.tempo": "Tempo, pulsos por minuto",
   "result.average": "Tono medio {mean} Hz",

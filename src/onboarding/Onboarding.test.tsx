@@ -215,6 +215,21 @@ describe("the range", () => {
     await click(t("common.back"));
     expect(heading(t("onboarding.baselineTitle"))).toBeInTheDocument();
   });
+
+  it("keeps the suggested range when the range step is skipped", async () => {
+    await toCalibration();
+    await measure(130);
+    await click(t("common.next"));
+    const [min, max] = stage().getAllByRole<HTMLInputElement>("spinbutton");
+    const suggested = {
+      targetMinHz: Number(min?.value),
+      targetMaxHz: Number(max?.value),
+    };
+    expect(suggested.targetMinHz).toBeGreaterThan(0);
+    await click(t("common.skip"));
+    await click(t("onboarding.saveContinue"));
+    expect(savedProfile()).toMatchObject(suggested);
+  });
 });
 
 describe("saving", () => {

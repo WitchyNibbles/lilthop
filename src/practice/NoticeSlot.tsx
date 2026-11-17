@@ -12,6 +12,8 @@ import { useAlert } from "../shell/AlertBanner";
 interface SlotContent {
   readonly notice: NoticeId | null;
   readonly lines: readonly string[];
+  /** The missing range is the one line with somewhere to send someone: Settings. */
+  readonly opensSettings?: boolean;
 }
 
 /** Notices that ask for something, then an alert, then neutral notices, then a session's notes. */
@@ -25,12 +27,27 @@ function useSlotContent(): SlotContent {
   if (alerted) return { notice, lines: [] };
   if (state.phase === "result" && state.outcome.status === "scored")
     return { notice, lines: [t("result.oneTake"), t("safety.s3")] };
-  return { notice, lines: band === null ? [t("exercise.needsRange")] : [] };
+  if (band === null)
+    return { notice, lines: [t("exercise.needsRange")], opensSettings: true };
+  return { notice, lines: [] };
+}
+
+function OpenSettingsButton() {
+  const { openScreen, t } = useApp();
+  return (
+    <button
+      className="btn"
+      onClick={() => openScreen("settings")}
+      type="button"
+    >
+      {t("exercise.openSettings")}
+    </button>
+  );
 }
 
 /** Fills the sill, whose size never changes, so a notice arriving moves nothing. */
 export function NoticeSlot() {
-  const { notice, lines } = useSlotContent();
+  const { notice, lines, opensSettings = false } = useSlotContent();
   const filled = lines.length > 0;
   return (
     <div
@@ -50,6 +67,7 @@ export function NoticeSlot() {
             <span key={line}>{`${line} `}</span>
           ))}
         </p>
+        {opensSettings ? <OpenSettingsButton /> : null}
       </div>
     </div>
   );

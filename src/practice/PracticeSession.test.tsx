@@ -262,4 +262,15 @@ describe("a session", () => {
       stage().getByRole("button", { name: "Start session" }),
     ).toBeDisabled();
   });
+
+  it("offers the way to Settings when there is no range", async () => {
+    backend.respond("get_profile", { ...PROFILE, targetMinHz: 0 });
+    await openPractice("pitch_awareness");
+    fireEvent.click(
+      stage().getByRole("button", { name: t("exercise.openSettings") }),
+    );
+    expect(
+      stage().getByRole("heading", { name: t("settings.title") }),
+    ).toBeInTheDocument();
+  });
 });
