@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 
-use cpal::{Stream, StreamError};
+use cpal::Stream;
 use ringbuf::traits::{Consumer, Split};
 use ringbuf::{HeapCons, HeapRb};
 
@@ -323,7 +323,7 @@ fn open(
 
 /// Nothing here stops the writer: the webview ends the take on this report,
 /// which keeps what was written.
-fn stream_errors(report: Report) -> impl FnMut(StreamError) + Send + 'static {
+fn stream_errors(report: Report) -> impl FnMut(cpal::Error) + Send + 'static {
     stream_error_handler(report, Arc::default(), AudioSource::Recorder)
 }
 
@@ -334,7 +334,7 @@ fn open_stream(
     name: String,
     path: PathBuf,
 ) -> AppResult<Opened<Stream, Started, Job<BufWriter<File>>>> {
-    let sample_rate = input.config.sample_rate().0;
+    let sample_rate = input.config.sample_rate();
     let fell_back = input.choice.fell_back;
     // The device may have many channels; the recording is mono.
     let recorder = WavRecorder::new(BufWriter::new(file), 1, sample_rate)?;
@@ -639,12 +639,22 @@ mod tests {
         let (report, seen) = collecting_report();
         let mut on_error = stream_errors(report);
 
-        on_error(StreamError::DeviceNotAvailable);
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
 
         let seen = seen.lock().unwrap();
         assert_eq!(seen.len(), 1);
         assert_eq!(seen[0].source, AudioSource::Recorder);
         assert_eq!(seen[0].kind, AudioErrorKind::DeviceLost);
+    }
+
+    #[test]
+    fn an_overrun_mid_take_does_not_end_the_take() {
+        let (report, seen) = collecting_report();
+        let mut on_error = stream_errors(report);
+
+        on_error(cpal::ErrorKind::Xrun.into());
+
+        assert!(seen.lock().unwrap().is_empty());
     }
 
     // ----- names and the session -----

@@ -1,6 +1,6 @@
 # Licence texts kept for crates that ship none
 
-These 24 crates have no licence file inside the published crate, so `npm run notices` would list them by SPDX name only. Each file here is a word-for-word copy of the licence file in the crate's upstream repository, read-only, at the commit the published crate was built from (the `git.sha1` in the crate's own `.cargo_vcs_info.json`, which matches the release tag where one exists). The generator uses a folder here only for a crate with no licence file of its own.
+These 23 crates have no licence file inside the published crate, so `npm run notices` would list them by SPDX name only. Each file here is a word-for-word copy of the licence file in the crate's upstream repository, read-only, at the commit the published crate was built from (the `git.sha1` in the crate's own `.cargo_vcs_info.json`, which matches the release tag where one exists). The generator uses a folder here only for a crate with no licence file of its own.
 
 When a crate in this list changes version, check its upstream again and update the folder and the table.
 
@@ -21,6 +21,15 @@ When a crate in this list changes version, check its upstream again and update t
 | objc2-app-kit          | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
 | objc2-app-kit          | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
 | objc2-app-kit          | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
+| objc2-audio-toolbox    | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
+| objc2-audio-toolbox    | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
+| objc2-audio-toolbox    | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
+| objc2-core-audio       | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
+| objc2-core-audio       | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
+| objc2-core-audio       | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
+| objc2-core-audio-types | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
+| objc2-core-audio-types | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
+| objc2-core-audio-types | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
 | objc2-core-foundation  | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
 | objc2-core-foundation  | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
 | objc2-core-foundation  | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
@@ -41,10 +50,6 @@ When a crate in this list changes version, check its upstream again and update t
 | objc2-web-kit          | 0.3.2   | LICENSE-APACHE.txt | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-APACHE.txt             |
 | objc2-web-kit          | 0.3.2   | LICENSE-MIT.txt    | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-MIT.txt                |
 | objc2-web-kit          | 0.3.2   | LICENSE-ZLIB.txt   | https://github.com/madsmtm/objc2/blob/8a5abacd90d5403fc0463459a35826f892b9142e/LICENSE-ZLIB.txt               |
-| symphonia              | 0.5.5   | LICENSE            | https://github.com/pdeljanov/Symphonia/blob/6d533f26150953a882a6a111ebd13f0abf7129d5/LICENSE                  |
-| symphonia-bundle-mp3   | 0.5.5   | LICENSE            | https://github.com/pdeljanov/Symphonia/blob/6d533f26150953a882a6a111ebd13f0abf7129d5/LICENSE                  |
-| symphonia-core         | 0.5.5   | LICENSE            | https://github.com/pdeljanov/Symphonia/blob/6d533f26150953a882a6a111ebd13f0abf7129d5/LICENSE                  |
-| symphonia-metadata     | 0.5.5   | LICENSE            | https://github.com/pdeljanov/Symphonia/blob/6d533f26150953a882a6a111ebd13f0abf7129d5/LICENSE                  |
 | webview2-com           | 0.39.1  | LICENSE            | https://github.com/wravery/webview2-rs/blob/edc2caf886175ccaebe86078c9cfe1ae2a187328/LICENSE                  |
 | webview2-com-macros    | 0.8.1   | LICENSE            | https://github.com/wravery/webview2-rs/blob/dffa41a8a46d3f5565eefbff2de57d38d399f158/LICENSE                  |
 | webview2-com-sys       | 0.39.1  | LICENSE            | https://github.com/wravery/webview2-rs/blob/edc2caf886175ccaebe86078c9cfe1ae2a187328/LICENSE                  |

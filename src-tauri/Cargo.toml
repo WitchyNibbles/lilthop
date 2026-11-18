@@ -23,11 +23,13 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-cpal = "0.15"
+cpal = "0.18"
 rustfft = "6"
 hound = "3.5"
 ringbuf = "0.6"
-rodio = "0.20"
+# The app plays only its own WAV recordings. hound decodes them, as it did
+# under rodio 0.20's default features.
+rodio = { version = "0.23", default-features = false, features = ["playback", "hound"] }
 rusqlite = { version = "0.43", features = ["bundled"] }
 zip = { version = "9.6", default-features = false, features = ["deflate"] }
 tauri-plugin-dialog = "2"

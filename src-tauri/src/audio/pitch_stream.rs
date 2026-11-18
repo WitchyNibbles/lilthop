@@ -5,14 +5,13 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread;
 use std::time::Duration;
 
-use cpal::traits::DeviceTrait;
-use cpal::{Stream, StreamError};
+use cpal::Stream;
 use ringbuf::traits::{Consumer, Split};
 use ringbuf::{HeapCons, HeapRb};
 use serde::Serialize;
 
 use super::capture::{
-    Capture, ChannelMix, Link, MonoSink, Opened, START_TIMEOUT, build_input_stream,
+    Capture, ChannelMix, Link, MonoSink, Opened, START_TIMEOUT, build_input_stream, device_name,
     open_input_device, play, spawn_capture, stream_error_handler, take_dropped,
 };
 use super::{AudioSource, Report, StreamInfo};
@@ -156,7 +155,7 @@ fn run(job: Job, running: &AtomicBool, mut emit: impl FnMut(PitchFrame)) {
 fn stream_errors(
     report: Report,
     failed: Arc<AtomicBool>,
-) -> impl FnMut(StreamError) + Send + 'static {
+) -> impl FnMut(cpal::Error) + Send + 'static {
     stream_error_handler(report, failed, AudioSource::Pitch)
 }
 
@@ -167,7 +166,7 @@ fn open(
     failed: Arc<AtomicBool>,
 ) -> AppResult<Opened<Stream, StreamInfo, Job>> {
     let input = open_input_device(requested)?;
-    let sample_rate = input.config.sample_rate().0;
+    let sample_rate = input.config.sample_rate();
     let channels = usize::from(input.config.channels());
     let ring_len = sample_rate as usize * RING_SECONDS;
     let (producer, consumer) = HeapRb::<f32>::new(ring_len).split();
@@ -188,7 +187,7 @@ fn open(
         guard: stream,
         info: StreamInfo {
             sample_rate,
-            device: input.device.name().unwrap_or(input.choice.name),
+            device: device_name(&input.device).unwrap_or(input.choice.name),
             fell_back: input.choice.fell_back,
         },
         job: Job {
@@ -349,7 +348,7 @@ mod tests {
         let report: Report = Arc::new(move |issue| sink.lock().unwrap().push(issue));
         let mut on_error = stream_errors(report, Arc::default());
 
-        on_error(cpal::StreamError::DeviceNotAvailable);
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
 
         let seen = seen.lock().unwrap();
         assert_eq!(seen.len(), 1);
