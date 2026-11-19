@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{
-    BuildStreamError, FromSample, Sample, SampleFormat, SizedSample, Stream, StreamConfig,
-    StreamError, SupportedStreamConfig,
+    DeviceId, FromSample, Sample, SampleFormat, SizedSample, Stream, StreamConfig,
+    SupportedStreamConfig,
 };
 use ringbuf::traits::Producer;
 
@@ -221,27 +221,40 @@ pub fn stream_failed(message: impl Into<String>) -> AppError {
 }
 
 /// What to tell the person when the running stream reports an error.
-pub fn issue_from_stream_error(error: &StreamError, source: AudioSource) -> AudioIssue {
-    match error {
-        StreamError::DeviceNotAvailable => AudioIssue::new(
+pub fn issue_from_stream_error(error: &cpal::Error, source: AudioSource) -> AudioIssue {
+    match error.kind() {
+        cpal::ErrorKind::DeviceNotAvailable => AudioIssue::new(
             source,
             AudioErrorKind::DeviceLost,
             "the microphone is no longer available",
         ),
-        other => AudioIssue::new(source, AudioErrorKind::StreamFailed, other.to_string()),
+        _ => AudioIssue::new(source, AudioErrorKind::StreamFailed, error.to_string()),
     }
 }
 
+/// True for what cpal reports while the stream goes on: an overrun it
+/// recovered from, the default device moving to a new route, or a refused
+/// real-time priority. None of these ends a take.
+fn stream_goes_on(kind: cpal::ErrorKind) -> bool {
+    matches!(
+        kind,
+        cpal::ErrorKind::Xrun | cpal::ErrorKind::DeviceChanged | cpal::ErrorKind::RealtimeDenied
+    )
+}
+
 /// cpal's error callback can fire again and again once a device is gone;
-/// report the first one only. Every error sets `failed`, so a later start
-/// can tell this stream is dead.
+/// report the first one only. Every error that stops the stream sets
+/// `failed`, so a later start can tell this stream is dead.
 pub fn stream_error_handler(
     report: Report,
     failed: Arc<AtomicBool>,
     source: AudioSource,
-) -> impl FnMut(StreamError) + Send + 'static {
+) -> impl FnMut(cpal::Error) + Send + 'static {
     let mut reported = false;
     move |error| {
+        if stream_goes_on(error.kind()) {
+            return;
+        }
         failed.store(true, Ordering::SeqCst);
         if !reported {
             reported = true;
@@ -250,10 +263,10 @@ pub fn stream_error_handler(
     }
 }
 
-fn error_from_build(error: &BuildStreamError) -> AppError {
-    match error {
-        BuildStreamError::DeviceNotAvailable => device_lost("the microphone is not available"),
-        other => stream_failed(other.to_string()),
+fn error_from_build(error: &cpal::Error) -> AppError {
+    match error.kind() {
+        cpal::ErrorKind::DeviceNotAvailable => device_lost("the microphone is not available"),
+        _ => stream_failed(error.to_string()),
     }
 }
 
@@ -293,11 +306,45 @@ pub struct InputDevice {
     pub choice: DeviceChoice,
 }
 
+/// The name a device is listed and saved under.
+///
+/// ALSA devices keep the PCM name they had before cpal 0.18 ("default",
+/// "sysdefault:CARD=PCH"). cpal 0.18 describes them by the first line of the
+/// ALSA hint instead, which repeats across one card's devices and would not
+/// match a microphone saved earlier. Other hosts name devices as they did.
+pub fn listed_name(id: Option<&DeviceId>, description: Option<&str>) -> Option<String> {
+    match id.and_then(alsa_pcm) {
+        // cpal 0.15 left the null device out of the list.
+        Some("null") => None,
+        Some(pcm) => Some(pcm.to_owned()),
+        None => description.map(str::to_owned),
+    }
+}
+
+/// The PCM name of an ALSA device.
+#[cfg(target_os = "linux")]
+fn alsa_pcm(id: &DeviceId) -> Option<&str> {
+    (id.host() == cpal::HostId::Alsa).then(|| id.id())
+}
+
+/// No host here is ALSA.
+#[cfg(not(target_os = "linux"))]
+fn alsa_pcm(_: &DeviceId) -> Option<&str> {
+    None
+}
+
+/// `listed_name` for a live device.
+pub fn device_name(device: &cpal::Device) -> Option<String> {
+    let description = device.description().ok();
+    let id = device.id().ok();
+    listed_name(id.as_ref(), description.as_ref().map(|d| d.name()))
+}
+
 /// Names of all input devices, for the settings list.
 pub fn input_device_names() -> Vec<String> {
     let host = cpal::default_host();
     host.input_devices()
-        .map(|devices| devices.filter_map(|d| d.name().ok()).collect())
+        .map(|devices| devices.filter_map(|d| device_name(&d)).collect())
         .unwrap_or_default()
 }
 
@@ -307,11 +354,11 @@ pub fn open_input_device(requested: Option<&str>) -> AppResult<InputDevice> {
     let named: Vec<(String, cpal::Device)> = host
         .input_devices()
         .map_err(|e| stream_failed(e.to_string()))?
-        .filter_map(|d| d.name().ok().map(|n| (n, d)))
+        .filter_map(|d| device_name(&d).map(|n| (n, d)))
         .collect();
     let names: Vec<String> = named.iter().map(|(n, _)| n.clone()).collect();
     let default = host.default_input_device();
-    let default_name = default.as_ref().and_then(|d| d.name().ok());
+    let default_name = default.as_ref().and_then(device_name);
     let choice = choose_device(requested, &names, default_name.as_deref())
         .ok_or_else(|| device_lost("no microphone was found"))?;
     let device = named
@@ -333,10 +380,10 @@ pub fn open_input_device(requested: Option<&str>) -> AppResult<InputDevice> {
 
 fn build<T: InputSample, S: SampleSink>(
     device: &cpal::Device,
-    config: &StreamConfig,
+    config: StreamConfig,
     mut sink: S,
-    on_error: impl FnMut(StreamError) + Send + 'static,
-) -> Result<Stream, BuildStreamError> {
+    on_error: impl FnMut(cpal::Error) + Send + 'static,
+) -> Result<Stream, cpal::Error> {
     device.build_input_stream(config, move |data: &[T], _| sink.push(data), on_error, None)
 }
 
@@ -346,18 +393,22 @@ pub fn build_input_stream<S: SampleSink>(
     device: &cpal::Device,
     config: &SupportedStreamConfig,
     sink: S,
-    on_error: impl FnMut(StreamError) + Send + 'static,
+    on_error: impl FnMut(cpal::Error) + Send + 'static,
 ) -> AppResult<Stream> {
     let cfg = config.config();
     let built = match config.sample_format() {
-        SampleFormat::F32 => build::<f32, S>(device, &cfg, sink, on_error),
-        SampleFormat::F64 => build::<f64, S>(device, &cfg, sink, on_error),
-        SampleFormat::I16 => build::<i16, S>(device, &cfg, sink, on_error),
-        SampleFormat::I32 => build::<i32, S>(device, &cfg, sink, on_error),
-        SampleFormat::I8 => build::<i8, S>(device, &cfg, sink, on_error),
-        SampleFormat::U16 => build::<u16, S>(device, &cfg, sink, on_error),
-        SampleFormat::U32 => build::<u32, S>(device, &cfg, sink, on_error),
-        SampleFormat::U8 => build::<u8, S>(device, &cfg, sink, on_error),
+        SampleFormat::F32 => build::<f32, S>(device, cfg, sink, on_error),
+        SampleFormat::F64 => build::<f64, S>(device, cfg, sink, on_error),
+        SampleFormat::I16 => build::<i16, S>(device, cfg, sink, on_error),
+        SampleFormat::I24 => build::<cpal::I24, S>(device, cfg, sink, on_error),
+        SampleFormat::I32 => build::<i32, S>(device, cfg, sink, on_error),
+        SampleFormat::I64 => build::<i64, S>(device, cfg, sink, on_error),
+        SampleFormat::I8 => build::<i8, S>(device, cfg, sink, on_error),
+        SampleFormat::U16 => build::<u16, S>(device, cfg, sink, on_error),
+        SampleFormat::U24 => build::<cpal::U24, S>(device, cfg, sink, on_error),
+        SampleFormat::U32 => build::<u32, S>(device, cfg, sink, on_error),
+        SampleFormat::U64 => build::<u64, S>(device, cfg, sink, on_error),
+        SampleFormat::U8 => build::<u8, S>(device, cfg, sink, on_error),
         other => {
             return Err(stream_failed(format!(
                 "the microphone uses a sample format this app cannot read ({other})"
@@ -736,6 +787,19 @@ mod tests {
     }
 
     #[test]
+    fn twenty_four_bit_samples_keep_their_level() {
+        let half = cpal::I24::new(1 << 22).unwrap();
+        let (mut mono, mono_rx) = ring::<f32>(4);
+        let (mut pcm, pcm_rx) = ring::<i16>(4);
+
+        push_mono(&mut mono, &[half], &mut mix(1));
+        push_pcm(&mut pcm, &[half], &mut mix(1));
+
+        assert_close(&drained(mono_rx), &[0.5]);
+        assert_eq!(drained(pcm_rx), vec![16384]);
+    }
+
+    #[test]
     fn hand_over_counts_drops_and_the_worker_takes_them() {
         let (link, counter) = Link::new(thread::current());
 
@@ -799,6 +863,41 @@ mod tests {
         assert_eq!(pick(None, &[], None), None);
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn alsa_devices_are_listed_by_their_pcm_name() {
+        let id = cpal::DeviceId::new(cpal::HostId::Alsa, "sysdefault:CARD=PCH");
+
+        let name = listed_name(Some(&id), Some("HDA Intel PCH, ALC892 Analog"));
+
+        assert_eq!(name.as_deref(), Some("sysdefault:CARD=PCH"));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn the_alsa_null_device_is_not_listed() {
+        let id = cpal::DeviceId::new(cpal::HostId::Alsa, "null");
+
+        assert_eq!(listed_name(Some(&id), Some("Discard all samples")), None);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn wasapi_devices_are_listed_by_their_friendly_name() {
+        let id = cpal::DeviceId::new(cpal::HostId::Wasapi, "{0.0.1.00000000}.{a1b2}");
+
+        let name = listed_name(Some(&id), Some("Microphone (USB Audio Device)"));
+
+        assert_eq!(name.as_deref(), Some("Microphone (USB Audio Device)"));
+    }
+
+    #[test]
+    fn a_device_without_an_id_is_listed_by_its_description() {
+        let name = listed_name(None, Some("Built-in Microphone"));
+
+        assert_eq!(name.as_deref(), Some("Built-in Microphone"));
+    }
+
     // ----- errors -----
 
     fn collecting_report() -> (Report, Arc<Mutex<Vec<AudioIssue>>>) {
@@ -813,8 +912,8 @@ mod tests {
         let (report, seen) = collecting_report();
         let mut on_error = stream_error_handler(report, Arc::default(), AudioSource::Pitch);
 
-        on_error(StreamError::DeviceNotAvailable);
-        on_error(StreamError::DeviceNotAvailable);
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
 
         let seen = seen.lock().unwrap();
         assert_eq!(seen.len(), 1);
@@ -826,15 +925,41 @@ mod tests {
         let (report, seen) = collecting_report();
         let mut on_error = stream_error_handler(report, Arc::default(), AudioSource::Pitch);
 
-        on_error(StreamError::BackendSpecific {
-            err: cpal::BackendSpecificError {
-                description: "xrun on hw:1".into(),
-            },
-        });
+        on_error(cpal::Error::with_message(
+            cpal::ErrorKind::BackendError,
+            "poll failed on hw:1",
+        ));
 
         let seen = seen.lock().unwrap();
         assert_eq!(seen[0].kind, AudioErrorKind::StreamFailed);
-        assert!(seen[0].message.contains("xrun on hw:1"));
+        assert!(seen[0].message.contains("poll failed on hw:1"));
+    }
+
+    #[test]
+    fn glitches_the_stream_recovers_from_are_not_failures() {
+        let (report, seen) = collecting_report();
+        let failed = Arc::new(AtomicBool::new(false));
+        let mut on_error = stream_error_handler(report, Arc::clone(&failed), AudioSource::Pitch);
+
+        on_error(cpal::ErrorKind::Xrun.into());
+        on_error(cpal::ErrorKind::DeviceChanged.into());
+        on_error(cpal::ErrorKind::RealtimeDenied.into());
+
+        assert!(!failed.load(Ordering::SeqCst));
+        assert!(seen.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_glitch_does_not_hide_the_failure_after_it() {
+        let (report, seen) = collecting_report();
+        let mut on_error = stream_error_handler(report, Arc::default(), AudioSource::Pitch);
+
+        on_error(cpal::ErrorKind::Xrun.into());
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
+
+        let seen = seen.lock().unwrap();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].kind, AudioErrorKind::DeviceLost);
     }
 
     // ----- the worker thread -----
@@ -968,14 +1093,14 @@ mod tests {
     // ----- health, bounded joins, late opens -----
 
     #[test]
-    fn any_stream_error_marks_the_stream_failed() {
+    fn a_stream_error_marks_the_stream_failed() {
         let (report, _) = collecting_report();
         let failed = Arc::new(AtomicBool::new(false));
         let mut on_error = stream_error_handler(report, Arc::clone(&failed), AudioSource::Pitch);
         assert!(!failed.load(Ordering::SeqCst));
 
-        on_error(StreamError::DeviceNotAvailable);
-        on_error(StreamError::DeviceNotAvailable);
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
+        on_error(cpal::ErrorKind::DeviceNotAvailable.into());
 
         assert!(failed.load(Ordering::SeqCst));
     }

@@ -1,8 +1,8 @@
 //! Playing a recording back.
 //!
-//! rodio's `OutputStream` is not `Send`, so playback lives on its own thread
-//! and takes commands over a channel. `play` returns as soon as the sound has
-//! started; the thread announces when it ends.
+//! Playback lives on its own thread, which owns the speaker, takes commands
+//! over a channel and watches for the end of the clip. `play` returns as soon
+//! as the sound has started; the thread announces when it ends.
 
 use std::fs::File;
 use std::io::BufReader;
@@ -11,7 +11,7 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Source};
 
 use super::capture::stream_failed;
 use crate::error::{AppError, AppResult};
@@ -156,9 +156,30 @@ fn end_current<O: Output>(output: &mut O, current: &mut Option<String>, on_ended
 
 // ---------- the real speaker ----------
 
+/// Open a recording for playing. Fails before any device is touched when the
+/// file is not a recording this app can read.
+fn open_clip(path: &Path) -> AppResult<Decoder<BufReader<File>>> {
+    let file = File::open(path)?;
+    Decoder::try_from(file)
+        .map_err(|e| AppError::invalid(format!("that recording could not be read: {e}")))
+}
+
+/// Why the speaker would not open. rodio's own message is a summary; the
+/// reason the system gave is in the error's causes.
+fn speaker_failed(error: &dyn std::error::Error) -> AppError {
+    let mut message = error.to_string();
+    let mut cause = error.source();
+    while let Some(inner) = cause {
+        message.push_str(": ");
+        message.push_str(&inner.to_string());
+        cause = inner.source();
+    }
+    stream_failed(message)
+}
+
 struct Live {
-    _stream: OutputStream,
-    sink: Sink,
+    _sink: MixerDeviceSink,
+    player: rodio::Player,
     started: Instant,
     expected: Option<Duration>,
 }
@@ -172,17 +193,17 @@ pub struct SpeakerOutput {
 
 impl Output for SpeakerOutput {
     fn start(&mut self, path: &Path) -> AppResult<()> {
-        let file = File::open(path)?;
-        let source = Decoder::new(BufReader::new(file))
-            .map_err(|e| AppError::invalid(format!("that recording could not be read: {e}")))?;
-        let expected = source.total_duration();
-        let (stream, handle) =
-            OutputStream::try_default().map_err(|e| stream_failed(e.to_string()))?;
-        let sink = Sink::try_new(&handle).map_err(|e| stream_failed(e.to_string()))?;
-        sink.append(source);
+        let clip = open_clip(path)?;
+        let expected = clip.total_duration();
+        let mut sink = DeviceSinkBuilder::open_default_sink().map_err(|e| speaker_failed(&e))?;
+        // Each clip opens and drops its own sink; rodio would print a line to
+        // stderr every time.
+        sink.log_on_drop(false);
+        let player = rodio::Player::connect_new(sink.mixer());
+        player.append(clip);
         self.live = Some(Live {
-            _stream: stream,
-            sink,
+            _sink: sink,
+            player,
             started: Instant::now(),
             expected,
         });
@@ -191,14 +212,14 @@ impl Output for SpeakerOutput {
 
     fn stop(&mut self) {
         if let Some(live) = self.live.take() {
-            live.sink.stop();
+            live.player.stop();
         }
     }
 
     fn finished(&self) -> bool {
         self.live
             .as_ref()
-            .is_none_or(|l| l.sink.empty() || is_overdue(l.started.elapsed(), l.expected))
+            .is_none_or(|l| l.player.empty() || is_overdue(l.started.elapsed(), l.expected))
     }
 }
 
@@ -269,6 +290,66 @@ mod tests {
         assert!(
             !is_overdue(Duration::from_secs(3600), None),
             "length unknown"
+        );
+    }
+
+    fn write_one_second_of_silence(path: &Path) {
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: 8000,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(path, spec).unwrap();
+        for _ in 0..8000 {
+            writer.write_sample(0i16).unwrap();
+        }
+        writer.finalize().unwrap();
+    }
+
+    #[test]
+    fn a_recording_opens_with_its_length() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("rec_1.wav");
+        write_one_second_of_silence(&path);
+
+        let clip = open_clip(&path).unwrap();
+
+        assert_eq!(clip.total_duration(), Some(Duration::from_secs(1)));
+    }
+
+    #[test]
+    fn a_file_that_is_not_audio_is_refused_as_unreadable() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("rec_1.wav");
+        std::fs::write(&path, b"not a recording").unwrap();
+
+        let Err(err) = open_clip(&path) else {
+            panic!("a file that is not audio opened as a clip");
+        };
+
+        assert_eq!(err.kind(), ErrorKind::InvalidInput);
+        assert!(
+            err.message().contains("that recording could not be read"),
+            "{}",
+            err.message()
+        );
+    }
+
+    #[test]
+    fn a_speaker_that_will_not_open_keeps_the_reason_the_system_gave() {
+        let refused = rodio::DeviceSinkError::BuildError(cpal::Error::with_message(
+            cpal::ErrorKind::DeviceBusy,
+            "hw:0 is in use",
+        ));
+
+        let err = speaker_failed(&refused);
+
+        assert_eq!(err.kind(), ErrorKind::StreamFailed);
+        assert!(
+            err.message().contains("hw:0 is in use"),
+            "{}",
+            err.message()
         );
     }
 
