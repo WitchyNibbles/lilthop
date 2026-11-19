@@ -1,0 +1,3 @@
+# Third-party code kept as published, apart from the changes src-tauri/vendor/README.md lists.
+# The repo's checks and GitHub's language stats leave it out.
+src-tauri/vendor/glib/** linguist-vendored

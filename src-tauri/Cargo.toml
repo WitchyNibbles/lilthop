@@ -46,5 +46,21 @@ strip = true
 [profile.dev.package.lilthop]
 opt-level = 2
 
+# The glib bug that vendor/glib fixes (see [patch.crates-io] below) only shows once glib is
+# optimised, as it is in a release build. Tests build it the same way, so tests/glib_variant.rs
+# catches the bug if the patch ever stops applying.
+[profile.dev.package.glib]
+opt-level = 3
+
 [dev-dependencies]
 tempfile = "3"
+
+# glib builds only on Linux, where Tauri's GTK stack uses it.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+glib = "0.18"
+
+# shortcut: glib 0.18.5 with upstream's fix for RUSTSEC-2024-0429 (gtk-rs-core commit b5a4071,
+# released in glib 0.20), since gtk-rs publishes no more 0.18 releases. Delete this section and
+# vendor/glib once Tauri's Linux stack moves to glib 0.20 or later; vendor/README.md has details.
+[patch.crates-io]
+glib = { path = "vendor/glib" }
